@@ -11,19 +11,21 @@
 
 int main(int argc, char* argv[]) {
     if (argc < 3) {
-        fprintf(stderr, "Usage: %s <input_csv> <output_json>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <input.csv|input.mat> <output_json>\n", argv[0]);
         return 1;
     }
 
-    if (read_csv(argv[1]) != 0) {
-        fprintf(stderr, "Erreur lecture CSV.\n");
-        return 2;
-    }
-
-    if (read_mat(argv[1]) != 0) {
-        fprintf(stderr, "Erreur lecture .mat.\n");
-
-        return 2;
+    const char *ext = strrchr(argv[1], '.');
+    if (ext && strcmp(ext, ".mat") == 0) {
+        if (read_mat(argv[1]) != 0) {
+            fprintf(stderr, "Erreur lecture .mat.\n");
+            return 2;
+        }
+    } else {
+        if (read_csv(argv[1]) != 0) {
+            fprintf(stderr, "Erreur lecture CSV.\n");
+            return 2;
+        }
     }
 
     ECG_Peaks peaks;

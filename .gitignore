@@ -8,3 +8,6 @@ build
 *.out
 *.toc
 *.synctex.gz
+
+# Python environment
+.venv/

@@ -20,16 +20,6 @@
  * ================================ */
 
 /**
- * @brief Contexte interne de traitement ECG (opaque).
- *
- * L'étudiant est libre de choisir les structures internes (buffers, filtres, états, etc.).
- */
-typedef struct {
-    int placeholder;
-} ECG_Context;
-
-
-/**
  * @brief Paramètres d'analyse ECG.
  *
  * Cette structure permet de configurer l'analyse ECG avant son exécution.
@@ -46,6 +36,17 @@ typedef struct
     double r_threshold_hint; /**< Seuil initial pour la détection des pics R (optionnel). */
 
 } ECG_Params;
+
+/**
+ * @brief Contexte interne de traitement ECG (opaque).
+ *
+ * L'étudiant est libre de choisir les structures internes (buffers, filtres, états, etc.).
+ */
+typedef struct {
+
+    ECG_Params params; /**< Paramètres d'analyse (copie locale). */
+
+} ECG_Context;
 
 
 /**

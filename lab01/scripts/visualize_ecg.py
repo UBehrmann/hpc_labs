@@ -1,5 +1,6 @@
 import json
 import argparse
+import os
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -74,7 +75,11 @@ def main():
     plt.legend()
     plt.grid(True)
     plt.tight_layout()
-    plt.show()
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    output_path = os.path.join(script_dir, "..", "ecg_plot.png")
+    plt.savefig(output_path, dpi=150)
+    print(f"Graphique sauvegardé : {os.path.normpath(output_path)}")
 
 
 if __name__ == "__main__":
