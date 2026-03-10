@@ -77,7 +77,7 @@
         \textbf{Assistant :}     & \textbf{Bruno Da Rocha Carvalho} \\
         \textbf{Classe :}        & \textbf{HPC} \\
         \textbf{Salle de labo :} & \textbf{A09} \\
-        \textbf{Date :}          & \textbf{18.02.2026} \\
+        \textbf{Date :}          & \textbf{03.03.2026} \\
     \end{tabular}
 \end{flushleft}
 
@@ -90,9 +90,21 @@
 
 \newpage
 
-\section{1ère section}
+\section{Résultats de l'analyse}
 
+L'exécution du programme sur le fichier \texttt{80bpm0.csv} produit la sortie suivante :
 
+\begin{verbatim}
+$ ./ecg_dealination ../80bpm0.csv output.json
+CSV chargé avec 12 leads et 7500 échantillons.
+96 pics R détectés.
+Durée de l'analyse : 13.839 ms
+Analyse terminée. Résultats sauvegardés dans output.json
+\end{verbatim}
+
+Le signal contient 7500 échantillons répartis sur 12 dérivations. L'algorithme a
+détecté 96 pics R. La durée totale de l'analyse est de
+\textbf{13.839 ms}.
 
 
 \end{document}

@@ -1,9 +1,10 @@
 #include "ecg_processing.h"
-#include "ecg_utils.h"
 
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "ecg_utils.h"
 
 ECG_Context* ecg_create(const ECG_Params* params) {
     if (!params) return NULL;
@@ -49,7 +50,7 @@ ECG_Status ecg_analyze(ECG_Context* ctx, const double* signal, size_t n_samples,
 
     /* 4. Intégration sur fenêtre glissante */
 
-    ecg_mwi(s, s, n_samples, (size_t)(ctx->params.sampling_rate_hz * 0.150)); // Fenêtre de 150 ms
+    ecg_mwi(s, s, n_samples, (size_t)(ctx->params.sampling_rate_hz * 0.150));  // Fenêtre de 150 ms
 
     /* 5. Seuil flottant : moyenne glissante + k * écart-type glissant */
 
@@ -58,15 +59,17 @@ ECG_Status ecg_analyze(ECG_Context* ctx, const double* signal, size_t n_samples,
      * threshold[i] = mean(s, i±half_win) + K * std(s, i±half_win)
      * K = 1.5 donne un bon compromis sensibilité / spécificité.
      */
-    const int   half_win = (int)(ctx->params.sampling_rate_hz * 0.300);
-    const double K       = 1.0;
+    const int half_win = (int)(ctx->params.sampling_rate_hz * 0.300);
+    const double K = 1.0;
 
-    double *threshold = (double *)malloc(n_samples * sizeof(double));
+    double* threshold = (double*)malloc(n_samples * sizeof(double));
     if (!threshold) return ECG_ERR_ALLOC;
 
     for (size_t i = 0; i < n_samples; i++) {
-        int lo = (int)i - half_win;  if (lo < 0) lo = 0;
-        int hi = (int)i + half_win;  if (hi >= (int)n_samples) hi = (int)n_samples - 1;
+        int lo = (int)i - half_win;
+        if (lo < 0) lo = 0;
+        int hi = (int)i + half_win;
+        if (hi >= (int)n_samples) hi = (int)n_samples - 1;
         size_t w = (size_t)(hi - lo + 1);
 
         /* Moyenne */
@@ -85,23 +88,17 @@ ECG_Status ecg_analyze(ECG_Context* ctx, const double* signal, size_t n_samples,
         threshold[i] = mean + K * std;
     }
 
-    /* Période réfractaire : 200 ms minimum entre deux pics R */
-    int refractory = (int)(ctx->params.sampling_rate_hz * 0.200);
-    int last_peak  = -refractory;
-
     peaks->R_count = 0;
 
     for (size_t i = 1; i + 1 < n_samples && peaks->R_count < MAX_BEATS; i++) {
-        /* Pic local au-dessus du seuil flottant, hors période réfractaire */
-        if (s[i] > threshold[i]
-            && s[i] >= s[i - 1]
-            && s[i] >= s[i + 1]
-            && (int)i - last_peak > refractory)
-        {
-            /* Raffiner : chercher le vrai pic R dans le signal original (±75 ms) */
-            int hw    = (int)(ctx->params.sampling_rate_hz * 0.075);
-            int start = (int)i - hw;  if (start < 0) start = 0;
-            int end   = (int)i + hw;  if (end >= (int)n_samples) end = (int)n_samples - 1;
+        /* Pic local au-dessus du seuil flottant */
+        if (s[i] > threshold[i] && s[i] >= s[i - 1] && s[i] >= s[i + 1]) {
+            /* Chercher le vrai pic R dans le signal original (±75 ms) */
+            int hw = (int)(ctx->params.sampling_rate_hz * 0.075);
+            int start = (int)i - hw;
+            if (start < 0) start = 0;
+            int end = (int)i + hw;
+            if (end >= (int)n_samples) end = (int)n_samples - 1;
 
             int r_idx = start;
             for (int j = start + 1; j <= end; j++) {
@@ -109,7 +106,6 @@ ECG_Status ecg_analyze(ECG_Context* ctx, const double* signal, size_t n_samples,
             }
 
             peaks->R[peaks->R_count++] = r_idx;
-            last_peak = (int)i;
         }
     }
 
@@ -120,8 +116,7 @@ ECG_Status ecg_analyze(ECG_Context* ctx, const double* signal, size_t n_samples,
         intervals->count = 0;
         double fs = (double)ctx->params.sampling_rate_hz;
         for (int i = 1; i < peaks->R_count && intervals->count < MAX_BEATS; i++) {
-            intervals->RR[intervals->count++] =
-                (peaks->R[i] - peaks->R[i - 1]) / fs;
+            intervals->RR[intervals->count++] = (peaks->R[i] - peaks->R[i - 1]) / fs;
         }
     }
 

@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "csv_reader.h"
 #include "ecg_processing.h"
@@ -55,7 +56,13 @@ int main(int argc, char* argv[]) {
 
     /* Ici vous êtes libre de déconstruire en chunk ou d'analyser le signal dans son entiéreté
        Dans la réalité vous serez plus ammené a avoir un flux continus plutôt qu'un gros chunk de données */
+    struct timespec t0, t1;
+    clock_gettime(CLOCK_MONOTONIC, &t0);
+
     ECG_Status st = ecg_analyze(ctx, ecg_data[lead_index], (size_t)sample_count, lead_index, &peaks, &intervals);
+
+    clock_gettime(CLOCK_MONOTONIC, &t1);
+    double elapsed_ms = (t1.tv_sec - t0.tv_sec) * 1e3 + (t1.tv_nsec - t0.tv_nsec) / 1e6;
 
     if (st != ECG_OK) {
         fprintf(stderr, "Erreur: ecg_analyze() a retourné %d.\n", (int)st);
@@ -64,6 +71,7 @@ int main(int argc, char* argv[]) {
     }
 
     printf("%d pics R détectés.\n", peaks.R_count);
+    printf("Durée de l'analyse : %.3f ms\n", elapsed_ms);
 
     ecg_destroy(ctx);
 

@@ -23,7 +23,7 @@ make
 
 ```bash
 # Depuis lab01/build/
-./ecg_dealination 80bpm0.csv output.json
+./ecg_dealination ../80bpm0.csv output.json
 ```
 
 ---
