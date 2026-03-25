@@ -1,3 +1,7 @@
-8000
-20000
-5 1000 Stream
+10712.35
+26040.92
+0.1099  1048   hpc_stream
+0.0142   248   hpc_stride64
+0.4406   586   hpc_compute200
+0.0976   353   rowmajor
+0.0382    86   colmajor

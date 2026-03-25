@@ -1,0 +1,38 @@
+SHORT Roofline: Runtime, DP FLOP/s, DRAM bandwidth (ch 0-3), Arithmetic Intensity
+
+EVENTSET
+FIXC1 ACTUAL_CPU_CLOCK
+FIXC2 MAX_CPU_CLOCK
+PMC0  RETIRED_INSTRUCTIONS
+PMC1  CPU_CLOCKS_UNHALTED
+PMC2  RETIRED_SSE_AVX_FLOPS_ALL
+PMC3  MERGE
+DFC0  DRAM_CHANNEL_0
+DFC1  DRAM_CHANNEL_1
+DFC2  DRAM_CHANNEL_2
+DFC3  DRAM_CHANNEL_3
+
+METRICS
+Runtime (RDTSC) [s]               time
+Runtime unhalted [s]              FIXC1*inverseClock
+Clock [MHz]                       1.E-06*(FIXC1/FIXC2)/inverseClock
+CPI                               PMC1/PMC0
+DP [MFLOP/s]                      1.0E-06*(PMC2)/time
+Memory bandwidth [MBytes/s]       1.0E-06*(DFC0+DFC1+DFC2+DFC3)*64.0/time
+Memory data volume [GBytes]       1.0E-09*(DFC0+DFC1+DFC2+DFC3)*64.0
+Arithmetic Intensity [FLOP/Byte]  PMC2/((DFC0+DFC1+DFC2+DFC3)*64.0)
+
+LONG
+Formulas:
+DP [MFLOP/s] = 1.0E-06*RETIRED_SSE_AVX_FLOPS_ALL/time
+Memory bandwidth [MBytes/s] = 1.0E-06*(DRAM_CHANNEL_0+DRAM_CHANNEL_1+DRAM_CHANNEL_2+DRAM_CHANNEL_3)*64/time
+Memory data volume [GBytes] = 1.0E-09*(DRAM_CHANNEL_0+DRAM_CHANNEL_1+DRAM_CHANNEL_2+DRAM_CHANNEL_3)*64
+Arithmetic Intensity [FLOP/Byte] = RETIRED_SSE_AVX_FLOPS_ALL / ((DRAM_CHANNEL_0+...+DRAM_CHANNEL_3)*64)
+-
+Custom Roofline group for AMD Zen3 (single-threaded, scalar double precision, -O0).
+Measures: runtime, scalar DP FLOPs (RETIRED_SSE_AVX_FLOPS_ALL + MERGE for overflow),
+DRAM traffic via memory controller counters (channels 0-3), and computes AI directly.
+MERGE is required because RETIRED_SSE_AVX_FLOPS_ALL can increment >15 per cycle.
+Note: DFC counters are socket-level (uncore); use a single thread on one socket.
+Deploy: sudo cp HPC.txt /usr/share/likwid/perfgroups/zen3/
+Run:    likwid-perfctr -C 2 -g HPC -m ./roofline_demo hpc_stream 50000000
