@@ -1,0 +1,143 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\graphicspath{ {./imgs/} }
+\usepackage{fancyhdr} % For headers and footers
+\usepackage{geometry}
+\usepackage{hyperref} % For clickable links
+\usepackage{longtable} % For long tables that can span multiple pages
+\usepackage{array}     % For better column formatting
+
+% Adjust margins
+\geometry{
+    top=4cm, 
+    bottom=2.5cm, 
+    left=2.5cm, 
+    right=2.5cm,
+    headheight=3cm, % Ensures sufficient space for header content
+    headsep=0.5cm,
+    }
+
+% Define the custom headers
+\fancypagestyle{firstpage}{% First page header style
+    \fancyhf{} % Clear all header/footer fields
+    \fancyhead[L]{%
+        \includegraphics[height=1.5cm]{heig_logo.png} \\
+    }
+    \fancyhead[R]{%
+        \includegraphics[height=1.5cm]{reds_logo.png} \\
+    }
+    \fancyfoot{} % No footer on the first page
+}
+
+% Define other pages style
+\fancypagestyle{otherpages}{%
+    \fancyhf{}
+    \fancyhead[L]{%
+        \includegraphics[height=1.5cm]{heig_logo.png} \\
+    }
+    \fancyhead[R]{%
+        \small Laboratoire 3: Optimisations de compilation \\
+        Urs Behrmann \\
+    }
+    \fancyfoot[C]{\small page \thepage}
+}
+
+\author{Urs Behrmann}
+
+\setlength{\parskip}{1em} % Définit un espace entre chaque paragraphe
+\setlength{\parindent}{0pt} % Optionnel : enlève l'indentation des paragraphes
+
+\begin{document}
+
+\emergencystretch=1em % Ajoute une flexibilité d'espacement
+
+% First page content
+\thispagestyle{firstpage}
+
+
+\vspace*{2cm}
+\begin{center}
+    \Huge Laboratoire 3 \\
+    \vspace{0.2cm}
+    \Large Optimisations de compilation\\
+    \vspace{1cm}
+    \small Départements : TIC\\
+    Unité d'enseignement HPC\\
+\end{center}
+
+\vspace{9cm}
+
+\renewcommand{\arraystretch}{1.5} % Adjust row height
+
+\begin{flushleft} % Left-align the table
+    \begin{tabular}{@{}l l@{}}
+        \textbf{Auteur :}       & \textbf{Urs Behrmann} \\
+        \textbf{Professeur :}    & \textbf{Alberto Dassatti} \\
+        \textbf{Assistant :}     & \textbf{Bruno Da Rocha Carvalho} \\
+        \textbf{Classe :}        & \textbf{HPC} \\
+        \textbf{Salle de labo :} & \textbf{A09} \\
+        \textbf{Date :}          & \textbf{25.03.2026} \\
+    \end{tabular}
+\end{flushleft}
+
+\newpage
+
+% Apply the other pages style
+\pagestyle{otherpages}
+
+\tableofcontents
+
+\newpage
+
+% ============================================================
+\section{Sortir un appel de fonction invariant hors d'une boucle}
+% ============================================================
+
+Si une fonction est appelée dans une boucle mais que son résultat ne change pas d'une itération à l'autre (parce qu'elle ne dépend que de variables stables), la solution est simple : on l'appelle une seule fois avant la boucle et on garde le résultat dans une variable. On peut aussi marquer la fonction \texttt{inline} pour éviter le coût du \emph{call/ret}.
+
+\textbf{Sans optimisation :} \href{https://godbolt.org/z/rs34zxv66}{Compiler Explorer}
+--- on voit \texttt{call compute} à chaque itération de la boucle.
+
+\textbf{Optimisé à la main :} \href{https://godbolt.org/z/Tf6M78eEP}{Compiler Explorer}
+--- \texttt{compute} n'est appelé qu'une fois avant la boucle, la boucle ne fait plus
+qu'écrire la valeur déjà calculée.
+
+\textbf{Avec \texttt{-O2} :} \href{https://godbolt.org/z/hY5G1TToE}{Compiler Explorer}
+--- le compilateur fait tout ça tout seul, et en plus il déroule la boucle (\emph{loop unrolling}).
+
+% ============================================================
+\section{Réduction de force : remplacer le modulo par un ET bit à bit}
+% ============================================================
+
+L'opération modulo (\texttt{\%}) est lente parce qu'elle revient à faire une division entière. Quand le diviseur est une puissance de 2, on peut la remplacer par un simple \texttt{\&}. Par exemple, \texttt{x \% 8} donne le même résultat que \texttt{x \& 7} pour les entiers positifs, parce que masquer les 3 bits de poids faible suffit.
+
+Attention : pour les entiers signés négatifs, les deux opérations ne donnent pas le même résultat. C'est pourquoi \texttt{-O2} ne remplace pas bêtement le modulo par un \texttt{AND} ; il génère quand même une petite séquence de correction pour gérer les négatifs.
+
+\textbf{Sans optimisation :} \href{https://godbolt.org/z/vvTGvs79z}{Compiler Explorer}
+--- le compilateur génère plusieurs instructions pour gérer le cas des négatifs.
+
+\textbf{Optimisé à la main :} \href{https://godbolt.org/z/as49MTh4e}{Compiler Explorer}
+--- en écrivant \texttt{x \& 7} directement, on obtient une seule instruction \texttt{AND}.
+
+\textbf{Avec \texttt{-O2} :} \href{https://godbolt.org/z/vbaTfebov}{Compiler Explorer}
+--- le compilateur garde la séquence de correction (il ne peut pas savoir que \texttt{x} est positif), mais il supprime le prologue/épilogue inutile.
+
+% ============================================================
+\section{Éliminer un branchement avec CMOV}
+% ============================================================
+
+Quand le processeur rencontre un \texttt{if}, il doit deviner quel chemin prendre (\emph{branch prediction}). Si la prédiction est mauvaise, il perd plusieurs cycles. L'instruction \texttt{CMOV} (\emph{Conditional MOVe}) fait un déplacement conditionnel sans sauter nulle part, ce qui évite ce problème.
+
+En C, écrire un opérateur ternaire (\texttt{a > b ? a : b}) au lieu d'un \texttt{if}/\texttt{return} suffit souvent à pousser le compilateur à utiliser \texttt{CMOV}, même sans flag d'optimisation.
+
+\textbf{Sans optimisation :} \href{https://godbolt.org/z/5PYKxofbG}{Compiler Explorer}
+--- le \texttt{if} produit un \texttt{jle} suivi d'un \texttt{jmp}.
+
+\textbf{Optimisé à la main :} \href{https://godbolt.org/z/vzxvr9hsa}{Compiler Explorer}
+--- l'opérateur ternaire génère un \texttt{cmovge}, plus de saut conditionnel.
+
+\textbf{Avec \texttt{-O2} :} \href{https://godbolt.org/z/KKnb43K35}{Compiler Explorer}
+--- le compilateur supprime aussi la stack frame, résultat : trois instructions seulement.
+
+\end{document}
