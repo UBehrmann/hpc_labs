@@ -1,0 +1,337 @@
+ Percent |	Source code & Disassembly of simd_demo for cycles:P (258 samples, percent: local period)
+--------------------------------------------------------------------------------------------------------
+         :
+         :
+         :
+         : 3    Disassembly of section .text:
+         :
+         : 5    00000000000011c0 <main>:
+         : 6    clock_gettime(CLOCK_MONOTONIC, &ts);
+         : 7    return (long long)ts.tv_sec * 1000LL + (long long)ts.tv_nsec / 1000000LL;
+         : 8    }
+         :
+         : 10   int main(int argc, char** argv)
+         : 11   {
+    0.00 :   11c0:   endbr64
+    0.00 :   11c4:   push   %r15
+    0.00 :   11c6:   push   %r14
+    0.00 :   11c8:   push   %r13
+    0.00 :   11ca:   push   %r12
+    0.00 :   11cc:   push   %rbp
+    0.00 :   11cd:   push   %rbx
+    0.00 :   11ce:   sub    $0x38,%rsp
+    0.00 :   11d2:   mov    %fs:0x28,%rax
+    0.00 :   11db:   mov    %rax,0x28(%rsp)
+    0.00 :   11e0:   xor    %eax,%eax
+         : 23   const float DELTA_TIME = 1.f / 60.f;
+         : 24   const float POSITION_LIMIT = 1000.f;
+         :
+         : 26   if (argc < 3) return 1;
+    0.00 :   11e2:   cmp    $0x2,%edi
+    0.00 :   11e5:   jg     120f <main+0x4f>
+    0.00 :   11e7:   mov    $0x1,%eax
+         :
+         : 31   printf(" ran for %lldms\n", milliseconds);
+         :
+         : 33   free(points);
+         : 34   return 0;
+         : 35   }
+    0.00 :   11ec:   mov    0x28(%rsp),%rdx
+    0.00 :   11f1:   sub    %fs:0x28,%rdx
+    0.00 :   11fa:   jne    15b0 <main+0x3f0>
+    0.00 :   1200:   add    $0x38,%rsp
+    0.00 :   1204:   pop    %rbx
+    0.00 :   1205:   pop    %rbp
+    0.00 :   1206:   pop    %r12
+    0.00 :   1208:   pop    %r13
+    0.00 :   120a:   pop    %r14
+    0.00 :   120c:   pop    %r15
+    0.00 :   120e:   ret
+         :
+         : 48   #ifdef __USE_EXTERN_INLINES
+         : 49   __extern_inline int
+         : 50   __NTH (atoi (const char *__nptr))
+         : 51   {
+         : 52   return (int) strtol (__nptr, (char **) NULL, 10);
+    0.00 :   120f:   mov    0x8(%rsi),%rdi
+    0.00 :   1213:   mov    %rsi,%rbx
+    0.00 :   1216:   mov    $0xa,%edx
+    0.00 :   121b:   xor    %esi,%esi
+    0.00 :   121d:   call   1130 <strtol@plt>
+    0.00 :   1222:   mov    0x10(%rbx),%rdi
+    0.00 :   1226:   mov    $0xa,%edx
+    0.00 :   122b:   xor    %esi,%esi
+         : 61   size_t numPoints = (size_t)atoi(argv[1]);
+    0.00 :   122d:   movslq %eax,%r13
+    0.00 :   1230:   call   1130 <strtol@plt>
+    0.00 :   1235:   mov    %rax,0x8(%rsp)
+         : 65   size_t numIters  = (size_t)atoi(argv[2]);
+    0.00 :   123a:   movslq %eax,%r15
+         : 67   Point* points = (Point*)malloc(numPoints * sizeof(Point));
+    0.00 :   123d:   imul   $0x48,%r13,%rax
+    0.00 :   1241:   mov    %rax,%rdi
+    0.00 :   1244:   mov    %rax,(%rsp)
+    0.00 :   1248:   call   1150 <malloc@plt>
+    0.00 :   124d:   mov    %rax,%r14
+         : 73   if (!points) {
+    0.00 :   1250:   test   %rax,%rax
+    0.00 :   1253:   je     11a0 <main.cold>
+         : 76   srand((unsigned)time(NULL));
+    0.00 :   1259:   xor    %edi,%edi
+    0.00 :   125b:   call   1140 <time@plt>
+    0.00 :   1260:   mov    %eax,%edi
+    0.00 :   1262:   call   1120 <srand@plt>
+         : 81   for (size_t i = 0; i < numPoints; ++i) {
+    0.00 :   1267:   test   %r13,%r13
+    0.00 :   126a:   je     155a <main+0x39a>
+    0.00 :   1270:   lea    0x48(%r14),%rbx
+    0.00 :   1274:   xor    %ebp,%ebp
+    0.00 :   1276:   cs nopw 0x0(%rax,%rax,1)
+         : 87   points[i].position = (float)(rand() % 100);
+    0.00 :   1280:   call   1190 <rand@plt>
+    0.00 :   1285:   vxorps %xmm5,%xmm5,%xmm5
+    0.00 :   1289:   lea    -0x40(%rbx),%r12
+    0.00 :   128d:   movslq %eax,%rdx
+    0.00 :   1290:   mov    %eax,%ecx
+    0.00 :   1292:   imul   $0x51eb851f,%rdx,%rdx
+    0.00 :   1299:   sar    $0x1f,%ecx
+    0.00 :   129c:   sar    $0x25,%rdx
+    0.00 :   12a0:   sub    %ecx,%edx
+    0.00 :   12a2:   imul   $0x64,%edx,%edx
+    0.35 :   12a5:   sub    %edx,%eax
+    0.00 :   12a7:   vcvtsi2ss %eax,%xmm5,%xmm0
+    0.00 :   12ab:   vmovss %xmm0,-0x48(%rbx)
+         : 101  points[i].velocity = (float)(rand() % 1000) / 100.0f;
+    0.00 :   12b0:   call   1190 <rand@plt>
+    0.00 :   12b5:   vxorps %xmm5,%xmm5,%xmm5
+    0.00 :   12b9:   movslq %eax,%rdx
+    0.00 :   12bc:   mov    %eax,%ecx
+    0.00 :   12be:   imul   $0x10624dd3,%rdx,%rdx
+    0.00 :   12c5:   sar    $0x1f,%ecx
+    0.00 :   12c8:   sar    $0x26,%rdx
+    0.00 :   12cc:   sub    %ecx,%edx
+    0.00 :   12ce:   imul   $0x3e8,%edx,%edx
+    0.00 :   12d4:   sub    %edx,%eax
+    0.00 :   12d6:   vcvtsi2ss %eax,%xmm5,%xmm0
+    0.00 :   12da:   vdivss 0xd22(%rip),%xmm0,%xmm0        # 2004 <_IO_stdin_used+0x4>
+    0.00 :   12e2:   vmovss %xmm0,-0x44(%rbx)
+         : 115  for (size_t k = 0; k < 16; ++k) {
+    0.00 :   12e7:   nopw   0x0(%rax,%rax,1)
+         : 117  points[i].otherNoisyValues[k] = (float)(rand() % 500) / 10.0f;
+    0.00 :   12f0:   call   1190 <rand@plt>
+    0.00 :   12f5:   vxorps %xmm4,%xmm4,%xmm4
+         : 120  for (size_t k = 0; k < 16; ++k) {
+    0.00 :   12f9:   add    $0x4,%r12
+         : 122  points[i].otherNoisyValues[k] = (float)(rand() % 500) / 10.0f;
+    0.00 :   12fd:   movslq %eax,%rdx
+    0.00 :   1300:   mov    %eax,%esi
+    0.00 :   1302:   imul   $0x10624dd3,%rdx,%rdx
+    0.00 :   1309:   sar    $0x1f,%esi
+    0.00 :   130c:   sar    $0x25,%rdx
+    0.00 :   1310:   sub    %esi,%edx
+    0.00 :   1312:   imul   $0x1f4,%edx,%edx
+    0.00 :   1318:   sub    %edx,%eax
+    0.00 :   131a:   vcvtsi2ss %eax,%xmm4,%xmm0
+    0.00 :   131e:   vdivss 0xce2(%rip),%xmm0,%xmm0        # 2008 <_IO_stdin_used+0x8>
+    0.00 :   1326:   vmovss %xmm0,-0x4(%r12)
+         : 134  for (size_t k = 0; k < 16; ++k) {
+    0.00 :   132d:   cmp    %r12,%rbx
+    0.00 :   1330:   jne    12f0 <main+0x130>
+         : 137  for (size_t i = 0; i < numPoints; ++i) {
+    0.00 :   1332:   inc    %rbp
+    0.00 :   1335:   add    $0x48,%rbx
+    0.00 :   1339:   cmp    %rbp,%r13
+    0.00 :   133c:   jne    1280 <main+0xc0>
+         : 142  }
+         :
+         : 144  __fortify_function int
+         : 145  printf (const char *__restrict __fmt, ...)
+         : 146  {
+         : 147  return __printf_chk (__USE_FORTIFY_LEVEL - 1, __fmt, __va_arg_pack ());
+    0.00 :   1342:   mov    %r13,%rcx
+    0.00 :   1345:   mov    %r15,%rdx
+    0.00 :   1348:   lea    0xce1(%rip),%rsi        # 2030 <_IO_stdin_used+0x30>
+    0.00 :   134f:   mov    $0x2,%edi
+    0.00 :   1354:   xor    %eax,%eax
+         : 153  clock_gettime(CLOCK_MONOTONIC, &ts);
+    0.00 :   1356:   lea    0x10(%rsp),%rbp
+    0.00 :   135b:   call   1170 <__printf_chk@plt>
+         : 156  fflush(stdout);
+    0.00 :   1360:   mov    0x2ca9(%rip),%rdi        # 4010 <stdout@GLIBC_2.2.5>
+    0.00 :   1367:   call   1160 <fflush@plt>
+         : 159  clock_gettime(CLOCK_MONOTONIC, &ts);
+    0.00 :   136c:   mov    %rbp,%rsi
+    0.00 :   136f:   mov    $0x1,%edi
+    0.00 :   1374:   call   1100 <clock_gettime@plt>
+         : 163  return (long long)ts.tv_sec * 1000LL + (long long)ts.tv_nsec / 1000000LL;
+    0.00 :   1379:   mov    0x18(%rsp),%rax
+    0.00 :   137e:   mov    $0xf4240,%ecx
+    0.00 :   1383:   cqto
+    0.00 :   1385:   idiv   %rcx
+    0.00 :   1388:   imul   $0x3e8,0x10(%rsp),%rdx
+    0.00 :   1391:   lea    (%rax,%rdx,1),%rbx
+         : 170  for (size_t i = 0; i < numIters; ++i) {
+    0.00 :   1395:   test   %r15,%r15
+    0.00 :   1398:   je     14a8 <main+0x2e8>
+    0.00 :   139e:   cmpl   $0x2,0x8(%rsp)
+    0.00 :   13a3:   jbe    14f6 <main+0x336>
+    0.00 :   13a9:   vmovss 0xc5b(%rip),%xmm3        # 200c <_IO_stdin_used+0xc>
+    0.00 :   13b1:   mov    (%rsp),%rax
+    0.00 :   13b5:   lea    -0x1(%r15),%rsi
+    0.00 :   13b9:   xor    %ecx,%ecx
+         : 179  if ((p->position < 0.f && p->velocity < 0.f) ||
+    0.00 :   13bb:   vxorps %xmm2,%xmm2,%xmm2
+    0.00 :   13bf:   lea    0x4(%r14,%rax,1),%rdx
+    0.00 :   13c4:   nop
+    0.00 :   13c5:   data16 cs nopw 0x0(%rax,%rax,1)
+         : 184  for (size_t i = 0; i < numIters; ++i) {
+    0.00 :   13d0:   lea    0x4(%r14),%rax
+    0.00 :   13d4:   jmp    1435 <main+0x275>
+    0.00 :   13d6:   cs nopw 0x0(%rax,%rax,1)
+         : 188  if ((p->position < 0.f && p->velocity < 0.f) ||
+   12.89 :   13e0:   vcomiss 0xc28(%rip),%xmm1        # 2010 <_IO_stdin_used+0x10>
+    7.51 :   13e8:   jbe    13fc <main+0x23c>
+         : 191  (p->position > POSITION_LIMIT && p->velocity > 0.f))
+    0.00 :   13ea:   vcomiss %xmm2,%xmm0
+    0.00 :   13ee:   jbe    13fc <main+0x23c>
+         : 194  p->velocity *= -1.f;
+    0.00 :   13f0:   vxorps 0xc68(%rip),%xmm0,%xmm0        # 2060 <_IO_stdin_used+0x60>
+    0.00 :   13f8:   vmovss %xmm0,(%rax)
+         : 197  p->position += p->velocity * DELTA_TIME;
+    5.15 :   13fc:   vfmadd231ss %xmm3,%xmm0,%xmm1
+    6.71 :   1401:   vmovss %xmm1,-0x4(%rax)
+         : 200  if ((p->position < 0.f && p->velocity < 0.f) ||
+   16.16 :   1406:   vcomiss %xmm1,%xmm2
+    6.31 :   140a:   ja     1490 <main+0x2d0>
+    6.43 :   1410:   vcomiss 0xbf8(%rip),%xmm1        # 2010 <_IO_stdin_used+0x10>
+    2.77 :   1418:   jbe    142c <main+0x26c>
+         : 205  (p->position > POSITION_LIMIT && p->velocity > 0.f))
+    0.00 :   141a:   vcomiss %xmm2,%xmm0
+    0.00 :   141e:   jbe    142c <main+0x26c>
+         : 208  p->velocity *= -1.f;
+    0.00 :   1420:   vxorps 0xc38(%rip),%xmm0,%xmm0        # 2060 <_IO_stdin_used+0x60>
+    0.00 :   1428:   vmovss %xmm0,(%rax)
+         : 211  for (size_t j = 0; j < numPoints; ++j) {
+    4.36 :   142c:   add    $0x48,%rax
+    5.54 :   1430:   cmp    %rax,%rdx
+    0.00 :   1433:   je     1470 <main+0x2b0>
+         : 215  p->position += p->velocity * DELTA_TIME;
+    3.93 :   1435:   vmovss (%rax),%xmm0
+    2.93 :   1439:   vmovaps %xmm0,%xmm1
+    3.54 :   143d:   vfmadd213ss -0x4(%rax),%xmm3,%xmm1
+         : 219  if ((p->position < 0.f && p->velocity < 0.f) ||
+   13.06 :   1443:   vcomiss %xmm1,%xmm2
+    2.36 :   1447:   jbe    13e0 <main+0x220>
+    0.00 :   1449:   vcomiss %xmm0,%xmm2
+    0.00 :   144d:   ja     13f0 <main+0x230>
+         : 224  p->position += p->velocity * DELTA_TIME;
+    0.00 :   144f:   vfmadd231ss %xmm3,%xmm0,%xmm1
+    0.00 :   1454:   vmovss %xmm1,-0x4(%rax)
+         : 227  if ((p->position < 0.f && p->velocity < 0.f) ||
+    0.00 :   1459:   vcomiss %xmm1,%xmm2
+    0.00 :   145d:   jbe    1410 <main+0x250>
+         : 230  for (size_t j = 0; j < numPoints; ++j) {
+    0.00 :   145f:   add    $0x48,%rax
+    0.00 :   1463:   cmp    %rax,%rdx
+    0.00 :   1466:   jne    1435 <main+0x275>
+    0.00 :   1468:   nopl   0x0(%rax,%rax,1)
+         : 235  for (size_t i = 0; i < numIters; ++i) {
+    0.00 :   1470:   lea    0x2(%rcx),%rdi
+    0.00 :   1474:   add    $0x3,%rcx
+    0.00 :   1478:   cmp    %rsi,%rcx
+    0.00 :   147b:   jae    1500 <main+0x340>
+    0.00 :   1481:   mov    %rdi,%rcx
+    0.00 :   1484:   jmp    13d0 <main+0x210>
+    0.00 :   1489:   nopl   0x0(%rax)
+         : 243  if ((p->position < 0.f && p->velocity < 0.f) ||
+    0.00 :   1490:   vcomiss %xmm0,%xmm2
+    0.00 :   1494:   ja     1420 <main+0x260>
+    0.00 :   1496:   jmp    142c <main+0x26c>
+    0.00 :   1498:   nopl   0x0(%rax,%rax,1)
+         : 248  for (size_t i = 0; i < numIters; ++i) {
+    0.00 :   14a0:   inc    %rdi
+    0.00 :   14a3:   cmp    %r15,%rdi
+    0.00 :   14a6:   jb     150b <main+0x34b>
+         : 252  clock_gettime(CLOCK_MONOTONIC, &ts);
+    0.00 :   14a8:   mov    %rbp,%rsi
+    0.00 :   14ab:   mov    $0x1,%edi
+    0.00 :   14b0:   call   1100 <clock_gettime@plt>
+         : 256  return (long long)ts.tv_sec * 1000LL + (long long)ts.tv_nsec / 1000000LL;
+    0.00 :   14b5:   mov    0x18(%rsp),%rax
+    0.00 :   14ba:   mov    $0xf4240,%esi
+    0.00 :   14bf:   mov    $0x2,%edi
+    0.00 :   14c4:   imul   $0x3e8,0x10(%rsp),%rcx
+    0.00 :   14cd:   cqto
+    0.00 :   14cf:   idiv   %rsi
+    0.00 :   14d2:   lea    0xb42(%rip),%rsi        # 201b <_IO_stdin_used+0x1b>
+    0.00 :   14d9:   lea    (%rcx,%rax,1),%rdx
+    0.00 :   14dd:   xor    %eax,%eax
+         : 266  long long milliseconds = endTime - startTime;
+    0.00 :   14df:   sub    %rbx,%rdx
+    0.00 :   14e2:   call   1170 <__printf_chk@plt>
+         : 269  free(points);
+    0.00 :   14e7:   mov    %r14,%rdi
+    0.00 :   14ea:   call   10f0 <free@plt>
+         : 272  return 0;
+    0.00 :   14ef:   xor    %eax,%eax
+    0.00 :   14f1:   jmp    11ec <main+0x2c>
+    0.00 :   14f6:   vmovss 0xb0e(%rip),%xmm3        # 200c <_IO_stdin_used+0xc>
+         : 276  for (size_t i = 0; i < numIters; ++i) {
+    0.00 :   14fe:   xor    %edi,%edi
+    0.00 :   1500:   mov    (%rsp),%r12
+         : 279  if ((p->position < 0.f && p->velocity < 0.f) ||
+    0.00 :   1504:   vxorps %xmm2,%xmm2,%xmm2
+    0.00 :   1508:   add    %r14,%r12
+         : 282  for (size_t i = 0; i < numIters; ++i) {
+    0.00 :   150b:   mov    %r14,%rax
+    0.00 :   150e:   jmp    153a <main+0x37a>
+         : 285  if ((p->position < 0.f && p->velocity < 0.f) ||
+    0.00 :   1510:   vcomiss 0xaf8(%rip),%xmm1        # 2010 <_IO_stdin_used+0x10>
+    0.00 :   1518:   jbe    152d <main+0x36d>
+         : 288  (p->position > POSITION_LIMIT && p->velocity > 0.f))
+    0.00 :   151a:   vcomiss %xmm2,%xmm0
+    0.00 :   151e:   jbe    152d <main+0x36d>
+         : 291  p->velocity *= -1.f;
+    0.00 :   1520:   vxorps 0xb38(%rip),%xmm0,%xmm0        # 2060 <_IO_stdin_used+0x60>
+    0.00 :   1528:   vmovss %xmm0,0x4(%rax)
+         : 294  for (size_t j = 0; j < numPoints; ++j) {
+    0.00 :   152d:   add    $0x48,%rax
+    0.00 :   1531:   cmp    %r12,%rax
+    0.00 :   1534:   je     14a0 <main+0x2e0>
+         : 298  p->position += p->velocity * DELTA_TIME;
+    0.00 :   153a:   vmovss 0x4(%rax),%xmm0
+    0.00 :   153f:   vmovaps %xmm0,%xmm1
+    0.00 :   1543:   vfmadd213ss (%rax),%xmm3,%xmm1
+    0.00 :   1548:   vmovss %xmm1,(%rax)
+         : 303  if ((p->position < 0.f && p->velocity < 0.f) ||
+    0.00 :   154c:   vcomiss %xmm1,%xmm2
+    0.00 :   1550:   jbe    1510 <main+0x350>
+    0.00 :   1552:   vcomiss %xmm0,%xmm2
+    0.00 :   1556:   jbe    152d <main+0x36d>
+    0.00 :   1558:   jmp    1520 <main+0x360>
+    0.00 :   155a:   xor    %ecx,%ecx
+    0.00 :   155c:   mov    %r15,%rdx
+    0.00 :   155f:   lea    0xaca(%rip),%rsi        # 2030 <_IO_stdin_used+0x30>
+    0.00 :   1566:   mov    $0x2,%edi
+    0.00 :   156b:   xor    %eax,%eax
+         : 314  clock_gettime(CLOCK_MONOTONIC, &ts);
+    0.00 :   156d:   lea    0x10(%rsp),%rbp
+    0.00 :   1572:   call   1170 <__printf_chk@plt>
+         : 317  fflush(stdout);
+    0.00 :   1577:   mov    0x2a92(%rip),%rdi        # 4010 <stdout@GLIBC_2.2.5>
+    0.00 :   157e:   call   1160 <fflush@plt>
+         : 320  clock_gettime(CLOCK_MONOTONIC, &ts);
+    0.00 :   1583:   mov    %rbp,%rsi
+    0.00 :   1586:   mov    $0x1,%edi
+    0.00 :   158b:   call   1100 <clock_gettime@plt>
+         : 324  return (long long)ts.tv_sec * 1000LL + (long long)ts.tv_nsec / 1000000LL;
+    0.00 :   1590:   mov    0x18(%rsp),%rax
+    0.00 :   1595:   mov    $0xf4240,%ecx
+    0.00 :   159a:   imul   $0x3e8,0x10(%rsp),%rbx
+    0.00 :   15a3:   cqto
+    0.00 :   15a5:   idiv   %rcx
+    0.00 :   15a8:   add    %rax,%rbx
+         : 331  for (size_t i = 0; i < numIters; ++i) {
+    0.00 :   15ab:   jmp    14a8 <main+0x2e8>
+         : 333  }
+    0.00 :   15b0:   call   1110 <__stack_chk_fail@plt>

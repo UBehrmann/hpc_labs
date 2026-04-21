@@ -1,0 +1,164 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[main=french,provide=*]{babel}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{array}
+\graphicspath{{./imgs/}}
+\geometry{
+    top=4cm,
+    bottom=2.5cm,
+    left=2.5cm,
+    right=2.5cm,
+    headheight=3cm,
+    headsep=0.5cm
+}
+
+\fancypagestyle{firstpage}{
+    \fancyhf{}
+    \fancyhead[L]{\includegraphics[height=1.5cm]{heig_logo.png}\\}
+    \fancyhead[R]{\includegraphics[height=1.5cm]{reds_logo.png}\\}
+    \fancyfoot{}
+}
+
+\fancypagestyle{otherpages}{
+    \fancyhf{}
+    \fancyhead[L]{\includegraphics[height=1.5cm]{heig_logo.png}\\}
+    \fancyhead[R]{\small Laboratoire 4: SIMD\\Urs Behrmann\\}
+    \fancyfoot[C]{\small page \thepage}
+}
+
+\begin{document}
+\thispagestyle{firstpage}
+
+\vspace*{2cm}
+\begin{center}
+    \Huge Laboratoire 4 \\
+    \vspace{0.2cm}
+    \Large SIMD \\
+    \vspace{1cm}
+    \small Départements : TIC\\
+    Unité d'enseignement HPC\\
+\end{center}
+
+\vspace{9cm}
+\renewcommand{\arraystretch}{1.5}
+\begin{flushleft}
+    \begin{tabular}{@{}l l@{}}
+        \textbf{Auteur :}       & \textbf{Urs Behrmann} \\
+        \textbf{Professeur :}   & \textbf{Alberto Dassatti} \\
+        \textbf{Assistant :}    & \textbf{Bruno Da Rocha Carvalho} \\
+        \textbf{Classe :}       & \textbf{HPC} \\
+        \textbf{Salle de labo :}& \textbf{A09} \\
+        \textbf{Date :}         & \textbf{21.04.2026} \\
+    \end{tabular}
+\end{flushleft}
+
+\newpage
+\pagestyle{otherpages}
+\tableofcontents
+\newpage
+
+\section{Objectif}
+Le but du laboratoire est de comprendre comment le SIMD peut accélérer un programme, d'abord avec l'auto-vectorisation du compilateur, puis avec une optimisation manuelle.
+
+\section{Ce que j'ai fait}
+J'ai travaillé sur la partie auto-vectorisation avec \texttt{simd\_demo}.\\
+J'ai compilé et comparé plusieurs options:
+\begin{center}
+\begin{tabular}{|l|c|}
+\hline
+Option & Temps d'exécution \\
+\hline
+\texttt{-O0} & 252 ms \\
+\texttt{-O2} & 40 ms \\
+\texttt{-O3} & 37 ms \\
+\texttt{-O3 -march=native} & 27 ms \\
+\hline
+\end{tabular}
+\end{center}
+
+J'ai aussi utilisé \texttt{perf record} et \texttt{perf annotate} pour regarder l'assembleur.
+
+\section{Observations simples}
+\begin{itemize}
+    \item En \texttt{-O0}, le code est surtout scalaire.
+    \item En \texttt{-O2}, on voit des registres \texttt{xmm} et des instructions packed (ex: \texttt{mulps}, \texttt{addps}), donc la boucle est vectorisée.
+    \item En \texttt{-O3}, c'est proche de \texttt{-O2} sur ce code, donc petit gain seulement.
+    \item Avec \texttt{-march=native}, le compilateur utilise des registres \texttt{ymm} (AVX/AVX2), donc plus de données traitées en parallèle.
+\end{itemize}
+
+En résumé, le plus grand gain vient du passage de \texttt{-O0} à \texttt{-O2}. Ensuite \texttt{-O3} apporte un petit plus, et \texttt{-march=native} apporte encore un gain grâce aux instructions du processeur local.
+
+\newpage
+
+\section{Optimisation du code (Partie 3.4)}
+
+\subsection{3.4.1 Aggraver le cas}
+J'ai modifié la structure pour ajouter des données inutiles entre les informations utiles. Dans l'assembleur (\texttt{main\_opti\_1.txt}), on voit surtout des opérations scalaires (\texttt{...ss}) et presque pas de vectorisation utile sur la boucle principale.
+
+Ce résultat est logique : les valeurs \texttt{position} et \texttt{velocity} sont plus éloignées en mémoire, donc le compilateur ne peut pas charger facilement des blocs de données homogènes.
+
+\subsection{3.4.2 Passage en SoA}
+J'ai transformé le code en Structure of Arrays, avec deux tableaux séparés : un pour \texttt{position} et un pour \texttt{velocity}.
+
+Dans \texttt{main\_opti\_2.txt}, on voit cette fois de vraies instructions vectorielles sur plusieurs éléments (\texttt{ymm}, \texttt{vfmadd...ps}, \texttt{vcmpltps}, etc.). Le code est plus favorable au SIMD car les données du même type sont contiguës en mémoire.
+
+\subsection{3.4.3 Version hybride alignée}
+J'ai ensuite fait une version hybride par blocs:
+\begin{itemize}
+    \item \texttt{BLOCK\_SIZE = 16}
+    \item \texttt{ALIGNMENT = 64}
+    \item allocation avec \texttt{posix\_memalign}
+\end{itemize}
+
+Dans \texttt{main\_opti\_3.txt}, on observe bien la logique par blocs et des instructions AVX vectorielles. Le compilateur traite les blocs de manière régulière, puis gère les éléments restants avec une partie scalaire.
+
+\subsection{Conclusion sur 3.4}
+
+Sur mes tests, l'organisation mémoire a un impact direct sur la vectorisation. Pour le compilateur, il est difficile de faire de la vectorisation s'il y a des données non contiguës en mémoire. Il faut avoir des 'vecteurs' de données contiguës pour que le compilateur puisse détecter qu'il peut faire de la vectorisation.
+
+\newpage
+
+\section{Partie 4 -- Optimisation manuelle}
+
+J'ai testé trois stratégies SIMD :
+\begin{itemize}
+    \item AoS + gather AVX2
+    \item SoA persistant + chargements contigus
+    \item version hybride alignée par blocs
+\end{itemize}
+
+Les trois versions donnent les mêmes résultats que la version séquentielle.
+
+La différence entre les trois versions vient surtout de l'organisation des données et du coût d'accès mémoire :
+\begin{itemize}
+    \item En AoS + gather, les données sont entremêlées, donc on doit faire des lectures indirectes (gather), ce qui coûte plus cher.
+    \item En SoA persistant, les tableaux \texttt{x}, \texttt{y}, \texttt{z}, \texttt{bias} sont contigus. On peut charger 8 entiers d'un coup avec des lectures simples, donc la boucle SIMD est plus efficace.
+    \item En hybride, même si les blocs sont alignés, il faut d'abord réorganiser les données en blocs avant de calculer. Ce coût de préparation annule le gain attendu sur ce cas.
+\end{itemize}
+
+Mesures faites avec \texttt{n = 30\,000\,000} éléments :
+\begin{center}
+\begin{tabular}{|l|c|}
+\hline
+Version & Temps \\
+\hline
+Séquentiel & 122--123 ms \\
+AoS + gather AVX2 & 161 ms \\
+SoA persistant (garde) & 112--113 ms \\
+Hybride aligné par blocs & 355 ms \\
+\hline
+\end{tabular}
+\end{center}
+
+Par contre, en performance, la version SoA persistante est la meilleure dans mon cas. La version hybride a bien été testée, mais elle n'a pas apporté de gain : elle est même plus lente, à cause du coût de réorganisation en blocs et des accès supplémentaires.
+
+On observe environ 10 ms de gain entre la version séquentielle et la version SoA persistante, ce qui correspond à un gain d'environ 8\% sur ce test.
+
+J'ai donc gardé uniquement la version SoA persistante dans le code final.
+
+
+\end{document}
