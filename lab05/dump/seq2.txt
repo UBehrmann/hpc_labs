@@ -1,0 +1,21 @@
+
+ Performance counter stats for './case1 seq':
+
+       552.249.595      cycles                                                                  (70,81%)
+       626.579.195      instructions                     #    1,13  insn per cycle            
+                                                  #    0,17  stalled cycles per insn     (71,61%)
+        94.297.454      branches                                                                (71,72%)
+         7.790.347      branch-misses                    #    8,26% of all branches             (71,68%)
+       103.480.683      stalled-cycles-frontend          #   18,74% frontend cycles idle        (71,75%)
+   <not supported>      stalled-cycles-backend                                                
+        27.637.591      cache-references                                                        (71,64%)
+         1.486.075      cache-misses                     #    5,38% of all cache refs           (70,80%)
+   <not supported>      LLC-loads                                                             
+   <not supported>      LLC-load-misses                                                       
+
+       0,128267089 seconds time elapsed
+
+       0,025045000 seconds user
+       0,103188000 seconds sys
+
+

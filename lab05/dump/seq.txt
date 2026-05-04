@@ -1,0 +1,20 @@
+
+ Performance counter stats for './case1 seq':
+
+       129.480.615      task-clock                       #    0,995 CPUs utilized             
+                 2      context-switches                 #   15,446 /sec                      
+                 2      cpu-migrations                   #   15,446 /sec                      
+            58.660      page-faults                      #  453,041 K/sec                     
+       638.949.023      instructions                     #    1,13  insn per cycle            
+                                                  #    0,17  stalled cycles per insn   
+       566.719.865      cycles                           #    4,377 GHz                       
+       109.518.420      stalled-cycles-frontend          #   19,32% frontend cycles idle      
+        97.619.450      branches                         #  753,931 M/sec                     
+         8.111.251      branch-misses                    #    8,31% of all branches           
+
+       0,130186762 seconds time elapsed
+
+       0,028044000 seconds user
+       0,102161000 seconds sys
+
+

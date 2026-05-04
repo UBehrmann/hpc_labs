@@ -1,0 +1,135 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[main=french,provide=*]{babel}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\graphicspath{{./imgs/}}
+\geometry{
+    top=4cm,
+    bottom=2.5cm,
+    left=2.5cm,
+    right=2.5cm,
+    headheight=3cm,
+    headsep=0.5cm
+}
+
+\fancypagestyle{firstpage}{
+    \fancyhf{}
+    \fancyhead[L]{\includegraphics[height=1.5cm]{heig_logo.png}\\}
+    \fancyhead[R]{\includegraphics[height=1.5cm]{reds_logo.png}\\}
+    \fancyfoot{}
+}
+
+\fancypagestyle{otherpages}{
+    \fancyhf{}
+    \fancyhead[L]{\includegraphics[height=1.5cm]{heig_logo.png}\\}
+    \fancyhead[R]{\small Laboratoire 5: Profiling\\Urs Behrmann\\}
+    \fancyfoot[C]{\small page \thepage}
+}
+
+\begin{document}
+\thispagestyle{firstpage}
+
+\vspace*{2cm}
+\begin{center}
+    \Huge Laboratoire 5 \\
+    \vspace{0.2cm}
+    \Large Profiling \\
+    \vspace{1cm}
+    \small Départements : TIC\\
+    Unité d'enseignement HPC\\
+\end{center}
+
+\vspace{9cm}
+\renewcommand{\arraystretch}{1.5}
+\begin{flushleft}
+    \begin{tabular}{@{}l l@{}}
+        \textbf{Auteur :}        & \textbf{Urs Behrmann} \\
+        \textbf{Professeur :}    & \textbf{Alberto Dassatti} \\
+        \textbf{Assistant :}     & \textbf{Bruno Da Rocha Carvalho} \\
+        \textbf{Classe :}        & \textbf{HPC} \\
+        \textbf{Salle de labo :} & \textbf{A09} \\
+        \textbf{Date :}          & \textbf{4 mai 2026} \\
+    \end{tabular}
+\end{flushleft}
+
+\newpage
+\pagestyle{otherpages}
+\tableofcontents
+\newpage
+
+\section{Analyse du programme fourni}
+
+\subsection{Scénario et outils}
+J'ai compilé le projet dans \texttt{lab05/build}. J'ai généré \textbf{200\,000} lignes (fichier \texttt{measurements.txt}) avec \texttt{./create\_sample 200000}, puis j'ai profilé l'exécutable \texttt{./main measurements.txt}.
+
+Le sujet demande d'utiliser les outils vus en cours. J'ai fait au minimum :
+\begin{itemize}
+    \item \textbf{\texttt{perf}} : \texttt{perf stat} pour une vue globale (cycles, instructions, etc.) et \texttt{perf record -g} + \texttt{perf report} pour voir quelles fonctions coûtent quand ça marche sur la machine (chez moi : \texttt{sudo perf ...}).
+    \item \textbf{Valgrind / \texttt{callgrind}} : pour compter les instructions par fonction de façon reproductible, même si le programme tourne beaucoup plus lentement qu'en natif.
+\end{itemize}
+
+\subsection{Résultat global}
+Exemple de commandes (dans \texttt{build/}, après compilation) :
+\begin{verbatim}
+./create_sample 200000
+/usr/bin/time -p ./main measurements.txt
+sudo perf stat ./main measurements.txt
+sudo perf record -g ./main measurements.txt
+sudo perf report
+\end{verbatim}
+Avec \texttt{time}, sur mon PC, \texttt{./main measurements.txt} prend environ \textbf{0{,}11\,s} de temps réel pour 200\,000 lignes (presque tout en temps utilisateur). Ça donne une idée de l'ordre de grandeur avant de lancer Valgrind.
+
+\subsection{Résultat \texttt{callgrind}}
+Commandes :
+\begin{verbatim}
+valgrind --tool=callgrind ./main measurements.txt
+callgrind_annotate callgrind.out.<pid>
+\end{verbatim}
+
+D'après \texttt{callgrind\_annotate}, l'essentiel des instructions (\texttt{Ir}) du programme passe dans trois zones :
+\begin{center}
+\begin{tabular}{|l|r|}
+\hline
+Zone (symbole / fichier) & Part des \texttt{Ir} \\
+\hline
+\texttt{\_\_strcmp\_avx2} (libc) & $\approx 55\,\%$ \\
+\texttt{main} (\texttt{lab05/src/main.c}) & $\approx 28\,\%$ \\
+\texttt{strtod} et fonctions liées (libc) & $\approx 7\,\%$ \\
+\hline
+\end{tabular}
+\end{center}
+
+Les appels à \texttt{strcmp} viennent surtout de la recherche de ville : dans le code, \texttt{getcity} parcourt le tableau \texttt{results} et compare les noms avec \texttt{strcmp} jusqu'à trouver la bonne entrée. Comme on refait ça pour \textbf{chaque ligne} du fichier, le coût explique la grosse part de \texttt{strcmp}. \texttt{strtod} correspond au parsing de la température après le \texttt{;}. Le tri \texttt{qsort} à la fin est beaucoup plus petit ici par rapport au reste (peu de villes différentes par rapport au nombre de lignes).
+
+\subsection{Lien avec \texttt{perf}}
+Avec \texttt{sudo perf record -g ./main measurements.txt} puis \texttt{perf report}, on devrait retomber sur la même idée : beaucoup de temps dans les comparaisons de chaînes / \texttt{getcity} et dans le parsing, plutôt que dans le tri final.
+
+\subsection{Piste d'amélioration}
+Une table de hachage (clé = nom de ville) ou une structure qui évite de scanner tout le tableau à chaque ligne réduirait directement le coût observé sur \texttt{strcmp}, au lieu d'optimiser une partie du code qui ne domine pas.
+
+\newpage
+
+\section{Analyse du programme du laboratoire~01}
+
+\subsection{Scénario}
+J'ai utilisé le fichier \texttt{80bpm0.csv} du dossier du labo (7500 échantillons). Commande typique :
+\begin{verbatim}
+./ecg_dealination ../80bpm0.csv sortie.json
+\end{verbatim}
+
+\subsection{Ce que j'ai vu avec \texttt{callgrind}}
+Avec Valgrind, une grosse partie des instructions vient de \texttt{ecg\_analyze}, mais aussi du CSV (\texttt{strtod}, etc.). Ça correspond à l'idée que le traitement du signal coûte, et que le format texte coûte aussi.
+
+\subsection{Problème dans mon code}
+Dans \texttt{ecg\_analyze}, pour calculer le seuil flottant, j'avais une boucle sur chaque échantillon et \textbf{à l'intérieur} deux boucles sur toute la fenêtre autour de l'échantillon pour calculer moyenne et écart-type. Quand la fenêtre est large (environ 600\,ms de signal de chaque côté, donc beaucoup de points), ça fait énormément de travail répété : pour chaque index, je recalculais tout depuis zéro au lieu de réutiliser ce qui ne change qu'un peu.
+
+\subsection{Changement que j'ai fait}
+J'ai appris qu'on peut préparer deux tableaux ``cumulés'' : un pour la somme des valeurs, un pour la somme des carrés. Comme ça, pour une fenêtre donnée, la somme sur la fenêtre se récupère en soustrayant deux cases du tableau cumulé (comme quand on fait une aire sous courbe par morceaux). L'écart-type se déduit de la somme et de la somme des carrés. Du coup le calcul du seuil devient beaucoup moins naïf.
+
+\subsection{Avant / après}
+Sur le même CSV, le programme affiche le temps passé dans \texttt{ecg\_analyze}. Avant, j'étais plutôt autour de \textbf{13\,ms}. Après la modification, c'est autour de \textbf{0{,}3\,ms}. Le nombre de pics R détectés (96) n'a pas changé, donc je considère que le résultat reste correct sur ce test.
+
+\end{document}

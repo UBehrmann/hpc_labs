@@ -1,0 +1,21 @@
+
+ Performance counter stats for './case1 rand':
+
+     3.982.901.665      cycles                                                                  (71,26%)
+     2.073.305.872      instructions                     #    0,52  insn per cycle            
+                                                  #    0,06  stalled cycles per insn     (71,39%)
+       434.066.417      branches                                                                (71,40%)
+         8.821.388      branch-misses                    #    2,03% of all branches             (71,44%)
+       124.906.843      stalled-cycles-frontend          #    3,14% frontend cycles idle        (71,54%)
+   <not supported>      stalled-cycles-backend                                                
+       128.868.772      cache-references                                                        (71,59%)
+        50.717.706      cache-misses                     #   39,36% of all cache refs           (71,37%)
+   <not supported>      LLC-loads                                                             
+   <not supported>      LLC-load-misses                                                       
+
+       0,909339100 seconds time elapsed
+
+       0,816991000 seconds user
+       0,091999000 seconds sys
+
+

@@ -1,0 +1,20 @@
+
+ Performance counter stats for './case1 rand':
+
+       912.938.824      task-clock                       #    0,999 CPUs utilized             
+                16      context-switches                 #   17,526 /sec                      
+                10      cpu-migrations                   #   10,954 /sec                      
+            58.661      page-faults                      #   64,255 K/sec                     
+     2.087.977.306      instructions                     #    0,52  insn per cycle            
+                                                  #    0,06  stalled cycles per insn   
+     4.014.838.798      cycles                           #    4,398 GHz                       
+       130.795.621      stalled-cycles-frontend          #    3,26% frontend cycles idle      
+       437.451.534      branches                         #  479,169 M/sec                     
+         9.053.483      branch-misses                    #    2,07% of all branches           
+
+       0,913980761 seconds time elapsed
+
+       0,813690000 seconds user
+       0,099961000 seconds sys
+
+

@@ -65,6 +65,22 @@ ECG_Status ecg_analyze(ECG_Context* ctx, const double* signal, size_t n_samples,
     double* threshold = (double*)malloc(n_samples * sizeof(double));
     if (!threshold) return ECG_ERR_ALLOC;
 
+    /* Préfixes pour moyenne / variance sur fenêtre en O(1) par échantillon */
+    double* pref_sum = (double*)malloc((n_samples + 1u) * sizeof(double));
+    double* pref_sq = (double*)malloc((n_samples + 1u) * sizeof(double));
+    if (!pref_sum || !pref_sq) {
+        free(pref_sum);
+        free(pref_sq);
+        free(threshold);
+        return ECG_ERR_ALLOC;
+    }
+    pref_sum[0] = 0.0;
+    pref_sq[0] = 0.0;
+    for (size_t i = 0; i < n_samples; i++) {
+        pref_sum[i + 1] = pref_sum[i] + s[i];
+        pref_sq[i + 1] = pref_sq[i] + s[i] * s[i];
+    }
+
     for (size_t i = 0; i < n_samples; i++) {
         int lo = (int)i - half_win;
         if (lo < 0) lo = 0;
@@ -72,21 +88,20 @@ ECG_Status ecg_analyze(ECG_Context* ctx, const double* signal, size_t n_samples,
         if (hi >= (int)n_samples) hi = (int)n_samples - 1;
         size_t w = (size_t)(hi - lo + 1);
 
-        /* Moyenne */
-        double sum = 0.0;
-        for (int j = lo; j <= hi; j++) sum += s[j];
-        double mean = sum / (double)w;
-
-        /* Écart-type */
-        double var = 0.0;
-        for (int j = lo; j <= hi; j++) {
-            double d = s[j] - mean;
-            var += d * d;
+        const double sum = pref_sum[(size_t)hi + 1u] - pref_sum[(size_t)lo];
+        const double mean = sum / (double)w;
+        const double sum_sq = pref_sq[(size_t)hi + 1u] - pref_sq[(size_t)lo];
+        double var = sum_sq / (double)w - mean * mean;
+        if (var < 0.0) {
+            var = 0.0;
         }
-        double std = sqrt(var / (double)w);
+        const double std = sqrt(var);
 
         threshold[i] = mean + K * std;
     }
+
+    free(pref_sum);
+    free(pref_sq);
 
     peaks->R_count = 0;
 

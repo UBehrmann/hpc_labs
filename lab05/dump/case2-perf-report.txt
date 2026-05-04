@@ -1,0 +1,265 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 1K of event 'cycles:P'
+# Event count (approx.): 1704195343
+#
+# Children      Self  Command  Shared Object         Symbol                            
+# ........  ........  .......  ....................  ..................................
+#
+    99.91%     0.00%  case2    case2                 [.] _start
+            |
+            ---_start
+               __libc_start_main@@GLIBC_2.34
+               __libc_start_call_main
+               main
+               |          
+                --0.57%--0xffffffff8a200bb7
+                          |          
+                           --0.51%--0xffffffff8b82811f
+
+    99.91%     0.00%  case2    libc.so.6             [.] __libc_start_main@@GLIBC_2.34
+            |
+            ---__libc_start_main@@GLIBC_2.34
+               __libc_start_call_main
+               main
+               |          
+                --0.57%--0xffffffff8a200bb7
+                          |          
+                           --0.51%--0xffffffff8b82811f
+
+    99.91%     0.00%  case2    libc.so.6             [.] __libc_start_call_main
+            |
+            ---__libc_start_call_main
+               main
+               |          
+                --0.57%--0xffffffff8a200bb7
+                          |          
+                           --0.51%--0xffffffff8b82811f
+
+    99.91%    99.07%  case2    case2                 [.] main
+            |          
+            |--99.07%--_start
+            |          __libc_start_main@@GLIBC_2.34
+            |          __libc_start_call_main
+            |          main
+            |          
+             --0.84%--main
+
+     0.61%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a200bb7
+            |
+            ---0xffffffff8a200bb7
+               |          
+                --0.55%--0xffffffff8b82811f
+
+     0.55%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8b82811f
+            |
+            ---0xffffffff8b82811f
+
+     0.48%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a5eb96b
+     0.48%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9a5427
+     0.48%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9a51ad
+     0.45%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9a4be7
+     0.27%     0.16%  case2    [kernel.kallsyms]     [k] 0xffffffff8b81b2b7
+     0.25%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a20012b
+     0.25%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8b820551
+     0.23%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9a35ea
+     0.18%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9a31d2
+     0.18%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8aa1dbdb
+     0.18%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8aa1a6a8
+     0.18%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9dd910
+     0.13%     0.00%  case2    libc.so.6             [.] __munmap
+     0.13%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a524dad
+     0.13%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9aa22b
+     0.13%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9ce8c8
+     0.13%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9cc761
+     0.13%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9cc5f5
+     0.13%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9cae2c
+     0.11%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9dc549
+     0.11%     0.05%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9440bf
+     0.09%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a304104
+     0.08%     0.00%  case2    ld-linux-x86-64.so.2  [.] _dl_start_user
+     0.08%     0.00%  case2    ld-linux-x86-64.so.2  [.] _dl_start
+     0.08%     0.00%  case2    ld-linux-x86-64.so.2  [.] _dl_sysdep_start
+     0.08%     0.00%  case2    ld-linux-x86-64.so.2  [.] dl_main
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8b8280e5
+     0.06%     0.06%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9d7d1f
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9dc2b2
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9da307
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9d8f82
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9d8e19
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9d7baa
+     0.06%     0.06%  case2    [kernel.kallsyms]     [k] 0xffffffff8aa529c6
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9a3763
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9437c9
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9a39af
+     0.06%     0.06%  case2    [kernel.kallsyms]     [k] 0xffffffff8b7fb68d
+     0.06%     0.00%  case2    libc.so.6             [.] __printf_chk
+     0.06%     0.00%  case2    libc.so.6             [.] __vfprintf_internal
+     0.06%     0.00%  case2    libc.so.6             [.] __printf_buffer_to_file_done
+     0.06%     0.00%  case2    libc.so.6             [.] _IO_file_xsputn@@GLIBC_2.2.5
+     0.06%     0.00%  case2    libc.so.6             [.] _IO_file_overflow@@GLIBC_2.2.5
+     0.06%     0.00%  case2    libc.so.6             [.] _IO_doallocbuf
+     0.06%     0.00%  case2    libc.so.6             [.] _IO_file_doallocate
+     0.06%     0.00%  case2    libc.so.6             [.] tcache_malloc_init
+     0.06%     0.00%  case2    libc.so.6             [.] __libc_malloc2
+     0.06%     0.00%  case2    libc.so.6             [.] _int_malloc
+     0.06%     0.00%  case2    libc.so.6             [.] __default_morecore@GLIBC_2.2.5
+     0.06%     0.00%  case2    libc.so.6             [.] __brk
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a524dda
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9ab162
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9ab009
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9cdf41
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8b80400b
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8b8006e7
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8b8005be
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8b7fb365
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8b7f97e3
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a201585
+     0.06%     0.06%  case2    [kernel.kallsyms]     [k] 0xffffffff8aa54fa7
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9c9594
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9ae58e
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9adaca
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9fc61e
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9433d8
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8aa5906c
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a5eb92c
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a992b4f
+     0.06%     0.06%  case2    [kernel.kallsyms]     [k] 0xffffffff8aa52ae6
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9c9542
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a99cca1
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a99cb76
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a99c930
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a99c394
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a99be6e
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a99b810
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9bbae1
+     0.06%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8aa52b42
+     0.06%     0.06%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9a4eea
+     0.05%     0.05%  case2    [kernel.kallsyms]     [k] 0xffffffff8b7f66cd
+     0.05%     0.05%  case2    [kernel.kallsyms]     [k] 0xffffffff8a587bc0
+     0.05%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a200f0b
+     0.05%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8b827724
+     0.05%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a5c4bc8
+     0.05%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a739edd
+     0.05%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a738f83
+     0.05%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a752515
+     0.05%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a7522f7
+     0.05%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a73f23c
+     0.05%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8b839b7e
+     0.05%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a6cd81b
+     0.05%     0.05%  case2    [kernel.kallsyms]     [k] 0xffffffff8aa4f685
+     0.05%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a201199
+     0.05%     0.05%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9d8ef9
+     0.05%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9a31ec
+     0.05%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8aa58c99
+     0.05%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9a3672
+     0.05%     0.05%  case2    [kernel.kallsyms]     [k] 0xffffffff8a201248
+     0.05%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a200b90
+     0.04%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9a392a
+     0.04%     0.04%  case2    [kernel.kallsyms]     [k] 0xffffffff8b7e4fa1
+     0.04%     0.00%  case2    ld-linux-x86-64.so.2  [.] mprotect
+     0.04%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a5247b9
+     0.04%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9b16af
+     0.04%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9b13fe
+     0.04%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9b0f49
+     0.04%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9177ab
+     0.04%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9037a4
+     0.04%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a90319b
+     0.04%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a90bf24
+     0.04%     0.04%  case2    [kernel.kallsyms]     [k] 0xffffffff8aa52ae1
+     0.04%     0.00%  case2    ld-linux-x86-64.so.2  [.] _dl_map_object_deps
+     0.04%     0.00%  case2    ld-linux-x86-64.so.2  [.] _dl_catch_exception
+     0.04%     0.00%  case2    ld-linux-x86-64.so.2  [.] openaux
+     0.04%     0.00%  case2    ld-linux-x86-64.so.2  [.] _dl_map_new_object
+     0.04%     0.00%  case2    ld-linux-x86-64.so.2  [.] _dl_load_cache_lookup
+     0.04%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9a4b51
+     0.04%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a99f585
+     0.04%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a99f0f2
+     0.04%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a92f263
+     0.04%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a99e933
+     0.04%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9bb5b2
+     0.04%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a70f150
+     0.01%     0.00%  case2    [unknown]             [k] 0x000078c861cf878b
+     0.01%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a525398
+     0.01%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8aa8bba9
+     0.01%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8aa8b8f7
+     0.01%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8aa89d3a
+     0.01%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8aa89c2c
+     0.01%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8aa898ec
+     0.01%     0.01%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9caece
+     0.01%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8ab29464
+     0.01%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8ab28844
+     0.01%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8ab28453
+     0.01%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a96a99d
+     0.01%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a96a7b5
+     0.01%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8ad3dfc5
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9af663
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8ab28e04
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8aa8a178
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9b0ef4
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a200f4b
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8b827465
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8b828a43
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8b8289ac
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8b81c6a9
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a926949
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9261c6
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8aa56747
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a926938
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a304109
+     0.00%     0.00%  perf-ex  [unknown]             [k] 0x000078c861cf878b
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a20012b
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8b820551
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a525398
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8aa8bba9
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8aa8b8f7
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8aa89d3a
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8aa89c2c
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8aa898ec
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8ab28d39
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8aa8c07d
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a917405
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a913fe6
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a52dae5
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a9138c2
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a52b931
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a52ff33
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8b828929
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8b82f947
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8b82f445
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a66d6df
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a914505
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a913669
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a9134ae
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a912c70
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a91274d
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a90a763
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a5330ff
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a532f97
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a90d0f5
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a5dedcb
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a913857
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a913669
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a9134ae
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a912c70
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a91274d
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a90a763
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a5330ff
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a532f97
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a57dc47
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a90d1a4
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a90d176
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a90d0e8
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a90d080
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a5337e5
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a5dedcb
+     0.00%     0.00%  perf-ex  [kernel.kallsyms]     [k] 0xffffffff8a90d080
+     0.00%     0.00%  case2    [kernel.kallsyms]     [k] 0xffffffff8a90d0bc
+
+
+#
+# (Cannot load tips.txt file, please install perf!)
+#
