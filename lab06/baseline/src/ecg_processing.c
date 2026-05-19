@@ -6,77 +6,74 @@
 
 #include "ecg_utils.h"
 
-static int ecg_ctx_ensure_buffers(ECG_Context *ctx, size_t n_samples) {
-    if (n_samples <= ctx->cap) {
-        return 0;
-    }
-    size_t new_cap = ctx->cap ? ctx->cap : 1024u;
-    while (new_cap < n_samples) {
-        new_cap *= 2u;
-    }
-
-    double *work = (double *)realloc(ctx->work, new_cap * sizeof(double));
-    double *threshold = (double *)realloc(ctx->threshold, new_cap * sizeof(double));
-    double *pref_sum = (double *)realloc(ctx->pref_sum, (new_cap + 1u) * sizeof(double));
-    double *pref_sq = (double *)realloc(ctx->pref_sq, (new_cap + 1u) * sizeof(double));
-    if (!work || !threshold || !pref_sum || !pref_sq) {
-        free(work);
-        free(threshold);
-        free(pref_sum);
-        free(pref_sq);
-        return -1;
-    }
-
-    ctx->work = work;
-    ctx->threshold = threshold;
-    ctx->pref_sum = pref_sum;
-    ctx->pref_sq = pref_sq;
-    ctx->cap = new_cap;
-    return 0;
-}
-
-ECG_Context *ecg_create(const ECG_Params *params) {
+ECG_Context* ecg_create(const ECG_Params* params) {
     if (!params) return NULL;
 
-    ECG_Context *ctx = (ECG_Context *)calloc(1, sizeof(ECG_Context));
+    ECG_Context* ctx = (ECG_Context*)malloc(sizeof(ECG_Context));
     if (!ctx) return NULL;
 
+    /* Copier les paramètres dans le contexte */
     ctx->params = *params;
+
     return ctx;
 }
 
-void ecg_destroy(ECG_Context *ctx) {
-    if (!ctx) return;
-    free(ctx->work);
-    free(ctx->threshold);
-    free(ctx->pref_sum);
-    free(ctx->pref_sq);
-    free(ctx);
+void ecg_destroy(ECG_Context* ctx) {
+    if (ctx) {
+        /* Libérer les ressources internes */
+        free(ctx);
+    }
 }
 
-ECG_Status ecg_analyze(ECG_Context *ctx, const double *signal, size_t n_samples, int lead_idx, ECG_Peaks *peaks,
-                       ECG_Intervals *intervals) {
+ECG_Status ecg_analyze(ECG_Context* ctx, const double* signal, size_t n_samples, int lead_idx, ECG_Peaks* peaks,
+                       ECG_Intervals* intervals) {
     if (!ctx || !signal || !peaks) return ECG_ERR_NULL;
     if (n_samples == 0 || lead_idx < 0 || lead_idx >= LEADS) return ECG_ERR_PARAM;
-    if (ecg_ctx_ensure_buffers(ctx, n_samples) != 0) return ECG_ERR_ALLOC;
 
-    double *s = ctx->work;
+    /* Copie modifiable du signal */
+    double s[n_samples];
     for (size_t i = 0; i < n_samples; i++) {
         s[i] = signal[i];
     }
 
-    ecg_remove_dc(s, n_samples);
-    ecg_derivative_1(s, s, n_samples);
-    ecg_square(s, s, n_samples);
-    ecg_mwi(s, s, n_samples, (size_t)(ctx->params.sampling_rate_hz * 0.150));
+    /* 1. Suppression DC (offset de ligne de base) */
 
+    ecg_remove_dc(s, n_samples);
+
+    /* 2. Calcul de la dérivée du signal */
+
+    ecg_derivative_1(s, s, n_samples);
+
+    /* 3. Mise au carré (accentuation des pentes) */
+
+    ecg_square(s, s, n_samples);
+
+    /* 4. Intégration sur fenêtre glissante */
+
+    ecg_mwi(s, s, n_samples, (size_t)(ctx->params.sampling_rate_hz * 0.150));  // Fenêtre de 150 ms
+
+    /* 5. Seuil flottant : moyenne glissante + k * écart-type glissant */
+
+    /*
+     * Fenêtre de contexte : 600 ms de chaque côté.
+     * threshold[i] = mean(s, i±half_win) + K * std(s, i±half_win)
+     * K = 1.5 donne un bon compromis sensibilité / spécificité.
+     */
     const int half_win = (int)(ctx->params.sampling_rate_hz * 0.300);
     const double K = 1.0;
 
-    double *threshold = ctx->threshold;
-    double *pref_sum = ctx->pref_sum;
-    double *pref_sq = ctx->pref_sq;
+    double* threshold = (double*)malloc(n_samples * sizeof(double));
+    if (!threshold) return ECG_ERR_ALLOC;
 
+    /* Préfixes pour moyenne / variance sur fenêtre en O(1) par échantillon */
+    double* pref_sum = (double*)malloc((n_samples + 1u) * sizeof(double));
+    double* pref_sq = (double*)malloc((n_samples + 1u) * sizeof(double));
+    if (!pref_sum || !pref_sq) {
+        free(pref_sum);
+        free(pref_sq);
+        free(threshold);
+        return ECG_ERR_ALLOC;
+    }
     pref_sum[0] = 0.0;
     pref_sq[0] = 0.0;
     for (size_t i = 0; i < n_samples; i++) {
@@ -103,10 +100,15 @@ ECG_Status ecg_analyze(ECG_Context *ctx, const double *signal, size_t n_samples,
         threshold[i] = mean + K * std;
     }
 
+    free(pref_sum);
+    free(pref_sq);
+
     peaks->R_count = 0;
 
     for (size_t i = 1; i + 1 < n_samples && peaks->R_count < MAX_BEATS; i++) {
+        /* Pic local au-dessus du seuil flottant */
         if (s[i] > threshold[i] && s[i] >= s[i - 1] && s[i] >= s[i + 1]) {
+            /* Chercher le vrai pic R dans le signal original (±75 ms) */
             int hw = (int)(ctx->params.sampling_rate_hz * 0.075);
             int start = (int)i - hw;
             if (start < 0) start = 0;
@@ -122,6 +124,9 @@ ECG_Status ecg_analyze(ECG_Context *ctx, const double *signal, size_t n_samples,
         }
     }
 
+    free(threshold);
+
+    /* Calcul des intervalles RR */
     if (intervals) {
         intervals->count = 0;
         double fs = (double)ctx->params.sampling_rate_hz;

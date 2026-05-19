@@ -1,0 +1,201 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[main=french,provide=*]{babel}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\graphicspath{{./imgs/}}
+\geometry{
+    top=4cm,
+    bottom=2.5cm,
+    left=2.5cm,
+    right=2.5cm,
+    headheight=3cm,
+    headsep=0.5cm
+}
+
+\fancypagestyle{firstpage}{
+    \fancyhf{}
+    \fancyhead[L]{\includegraphics[height=1.5cm]{heig_logo.png}\\}
+    \fancyhead[R]{\includegraphics[height=1.5cm]{reds_logo.png}\\}
+    \fancyfoot{}
+}
+
+\fancypagestyle{otherpages}{
+    \fancyhf{}
+    \fancyhead[L]{\includegraphics[height=1.5cm]{heig_logo.png}\\}
+    \fancyhead[R]{\small Laboratoire 6: Énergie\\Urs Behrmann\\}
+    \fancyfoot[C]{\small page \thepage}
+}
+
+\begin{document}
+\thispagestyle{firstpage}
+
+\vspace*{2cm}
+\begin{center}
+    \Huge Laboratoire 6 \\
+    \vspace{0.2cm}
+    \Large Mesure de consommation énergétique \\
+    \vspace{1cm}
+    \small Départements : TIC\\
+    Unité d'enseignement HPC\\
+\end{center}
+
+\vspace{9cm}
+\renewcommand{\arraystretch}{1.5}
+\begin{flushleft}
+    \begin{tabular}{@{}l l@{}}
+        \textbf{Auteur :}        & \textbf{Urs Behrmann} \\
+        \textbf{Professeur :}    & \textbf{Alberto Dassatti} \\
+        \textbf{Assistant :}     & \textbf{Bruno Da Rocha Carvalho} \\
+        \textbf{Classe :}        & \textbf{HPC} \\
+        \textbf{Salle de labo :} & \textbf{A09} \\
+        \textbf{Date :}          & \textbf{19 mai 2026} \\
+    \end{tabular}
+\end{flushleft}
+
+\newpage
+\pagestyle{otherpages}
+
+\section{Tâche 1 : SIMD vs séquentiel}
+
+\subsection{Programme}
+Code du labo~4 dans \texttt{lab06/build/simd\_bench}, $n = 30 \times 10^6$, modes \texttt{seq} et \texttt{simd}. Même checksum.
+
+\subsection{Mesures (\texttt{sudo perf stat})}
+\begin{verbatim}
+sudo perf stat -e power/energy-pkg/,power_core/energy-core/ \
+  ./simd_bench seq
+sudo perf stat -e power/energy-pkg/,power_core/energy-core/ \
+  ./simd_bench simd
+\end{verbatim}
+
+\begin{center}
+\begin{tabular}{|l|r|r|r|}
+\hline
+Version & \texttt{energy-pkg} (J) & \texttt{energy-core} (J) & Temps (s) \\
+\hline
+séquentielle & 6{,}18 & 2{,}76 & 0{,}368 \\
+SIMD (SoA) & 10{,}39 & 4{,}57 & 0{,}597 \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Interprétation}
+La version SIMD consomme environ \textbf{68\,\%} d'énergie package en plus (10{,}39\,J vs 6{,}18\,J) pour le même résultat, et prend \textbf{62\,\%} de temps en plus. C'est cohérent : sur mon portable, le SIMD n'accélère pas le calcul (conversion AoS$\rightarrow$SoA, boucle simple) mais fait tourner le CPU plus longtemps, donc plus de joules. L'énergie suit surtout le temps actif du package.
+
+\section{Tâche 2 : projet ECG (labo~1)}
+
+\subsection{Outils}
+\begin{itemize}
+    \item \textbf{Global} : \texttt{sudo perf stat -e power/energy-pkg/,power\_core/energy-core/ ./ecg\_energy ...}
+    \item \textbf{Ciblé} : \texttt{PerfManager} + \texttt{sudo ../scripts/run\_ecg\_perf\_control.sh}
+\end{itemize}
+
+Fichier : \texttt{lab06/data/test\_ecg.csv} (7500 échantillons, 96 pics R).
+
+\subsection{Mesure globale}
+\begin{verbatim}
+sudo perf stat -e power/energy-pkg/,power_core/energy-core/ \
+  ./ecg_energy ../data/test_ecg.csv /tmp/out_global.json
+\end{verbatim}
+
+\begin{center}
+\begin{tabular}{|l|r|}
+\hline
+Compteur & Énergie / durée \\
+\hline
+\texttt{power/energy-pkg/} & 0{,}20\,J \\
+\texttt{power\_core/energy-core/} & 0{,}12\,J \\
+Temps perf & 0{,}008\,s \\
+\texttt{ecg\_analyze} (chrono) & 0{,}334\,ms \\
+\hline
+\end{tabular}
+\end{center}
+
+Le programme lit tout le CSV, analyse la dérivation~II, écrit le JSON. L'énergie inclut donc l'I/O et pas seulement le traitement du signal.
+
+\subsection{Mesure ciblée (\texttt{ecg\_analyze} seulement)}
+Script avec FIFO et \texttt{perf stat --delay=-1 --control}. Résultat :
+\begin{center}
+\begin{tabular}{|l|r|}
+\hline
+Compteur & Énergie \\
+\hline
+\texttt{power/energy-pkg/} & 0{,}02\,J \\
+\texttt{power\_core/energy-core/} & 0{,}01\,J \\
+Temps perf & 0{,}008\,s \\
+Temps \texttt{ecg\_analyze} (chrono) & 0{,}317\,ms \\
+\hline
+\end{tabular}
+\end{center}
+
+La zone mesurée est très courte ($<$\,1\,ms), donc les joules sont petits et un peu bruités.
+
+\subsection{Global vs ciblé}
+\begin{center}
+\begin{tabular}{|l|r|r|}
+\hline
+Mesure & \texttt{energy-pkg} (J) & \texttt{energy-core} (J) \\
+\hline
+globale (tout le programme) & 0{,}20 & 0{,}12 \\
+ciblée (\texttt{ecg\_analyze}) & 0{,}02 & 0{,}01 \\
+\hline
+\end{tabular}
+\end{center}
+
+Environ \textbf{90\,\%} de l'énergie package du run complet vient du hors-\texttt{ecg\_analyze} (parsing CSV des 12 dérivations, écriture JSON). Le traitement du signal reste important en CPU utile, mais sur ce fichier test l'I/O domine la facture énergétique globale.
+
+\subsection{Partie coûteuse}
+Pour réduire la consommation sur cible embarquée, il faudrait viser le format d'entrée (binaire / une seule dérivation) avant d'optimiser encore \texttt{ecg\_analyze}.
+
+\subsection{Amélioration proposée}
+Réutiliser la mémoire de travail dans \texttt{ECG\_Context} au lieu de :
+\begin{itemize}
+    \item allouer \texttt{threshold}, \texttt{pref\_sum}, \texttt{pref\_sq} à chaque \texttt{ecg\_analyze} ;
+    \item utiliser un tableau automatique \texttt{double s[n\_samples]} sur la pile.
+\end{itemize}
+But : moins d'appels à \texttt{malloc}/\texttt{free} et moins de trafic mémoire $\rightarrow$ moins de CPU actif $\rightarrow$ moins de joules sur une analyse répétée (typique en embarqué).
+
+Code \textbf{avant} : \texttt{lab06/baseline/} et binaire \texttt{ecg\_repeat\_avant}.\\
+Code \textbf{après} : \texttt{lab01/src/ecg\_processing.c} et \texttt{ecg\_repeat\_apres}.
+
+\subsection{Mesure après modification}
+2000 fois \texttt{ecg\_analyze} sur le même CSV (96 pics R à chaque fois), hors écriture JSON :
+
+\begin{verbatim}
+cd lab06/build && cmake .. && make ecg_repeat_avant ecg_repeat_apres
+sudo ../scripts/compare_ecg_opt.sh ../data/test_ecg.csv 2000
+\end{verbatim}
+
+Mesure \texttt{perf stat} sur tout le binaire (1 lecture CSV + 2000 analyses). Variante ciblée FIFO : \texttt{run\_ecg\_repeat\_perf.sh avant|apres}.
+
+\subsection{Comparaison avant / après}
+\texttt{sudo ../scripts/compare\_ecg\_opt.sh} (2000 analyses, même CSV, 96 pics R) :
+
+\begin{center}
+\begin{tabular}{|l|r|r|r|}
+\hline
+Version & Temps réel (s) & \texttt{energy-pkg} (J) & \texttt{energy-core} (J) \\
+\hline
+avant (malloc + VLA) & 0{,}546 & 10{,}22 & 5{,}81 \\
+après (tampons contexte) & 0{,}500 & 9{,}07 & 5{,}20 \\
+\hline
+Gain & $\approx$ 8{,}4\,\% & $\approx$ 11{,}3\,\% & $\approx$ 10{,}5\,\% \\
+\hline
+\end{tabular}
+\end{center}
+
+Moins de \texttt{malloc}/\texttt{free} et moins de pression sur la pile $\Rightarrow$ moins de temps CPU et environ \textbf{11\,\%} de joules en moins sur le package pour 2000 analyses. Sur un run unique \texttt{ecg\_energy} (0{,}20\,J total), l'écart est noyé par le CSV ; d'où \texttt{ecg\_repeat\_*}.
+
+\section{Conclusion}
+L'idée centrale du labo : \textbf{moins le CPU travaille longtemps, moins le package consomme de joules}. Les compteurs RAPL (\texttt{power/energy-pkg/}, \texttt{power\_core/energy-core/}) suivent surtout le temps où le processeur est actif.
+
+\textbf{SIMD} : la version vectorisée est plus lente (0{,}60\,s vs 0{,}37\,s) et consomme plus (10{,}39\,J vs 6{,}18\,J). Pas de gain perf $\Rightarrow$ pas de gain énergétique --- au contraire.
+
+\textbf{ECG} : en répétant \texttt{ecg\_analyze}, moins de temps (0{,}50\,s vs 0{,}55\,s) va avec moins d'énergie (9{,}07\,J vs 10{,}22\,J, soit $\approx$ 11\,\%). Optimiser le code pour finir plus vite, c'est directement réduire la facture énergétique.
+
+\textbf{Embarqué} : viser d'abord ce qui allonge le CPU (I/O, allocations inutiles), puis mesurer les joules. Le temps reste un bon indicateur : s'il baisse, l'énergie baisse en général aussi.
+
+\end{document}

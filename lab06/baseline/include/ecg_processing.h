@@ -43,12 +43,9 @@ typedef struct
  * L'étudiant est libre de choisir les structures internes (buffers, filtres, états, etc.).
  */
 typedef struct {
+
     ECG_Params params; /**< Paramètres d'analyse (copie locale). */
-    double *work;
-    double *threshold;
-    double *pref_sum;
-    double *pref_sq;
-    size_t cap;
+
 } ECG_Context;
 
 
