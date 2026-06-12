@@ -1,0 +1,298 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\graphicspath{ {./imgs/} }
+\usepackage{fancyhdr} % For headers and footers
+\usepackage{geometry}
+\usepackage{hyperref} % For clickable links
+\usepackage{longtable} % For long tables that can span multiple pages
+\usepackage{array}     % For better column formatting
+
+% Adjust margins
+\geometry{
+    top=4cm, 
+    bottom=2.5cm, 
+    left=2.5cm, 
+    right=2.5cm,
+    headheight=3cm, % Ensures sufficient space for header content
+    headsep=0.5cm,
+    }
+
+% Define the custom headers
+\fancypagestyle{firstpage}{% First page header style
+    \fancyhf{} % Clear all header/footer fields
+    \fancyhead[L]{%
+        \includegraphics[height=1.5cm]{heig_logo.png} \\
+    }
+    \fancyhead[R]{%
+        \includegraphics[height=1.5cm]{reds_logo.png} \\
+    }
+    \fancyfoot{} % No footer on the first page
+}
+
+% Define other pages style
+\fancypagestyle{otherpages}{%
+    \fancyhf{}
+    \fancyhead[L]{%
+        \includegraphics[height=1.5cm]{heig_logo.png} \\
+    }
+    \fancyhead[R]{%
+        \small Laboratoire 7: Parallélisme des tâches \\
+        Urs Behrmann \\
+    }
+    \fancyfoot[C]{\small page \thepage}
+}
+
+\author{Urs Behrmann}
+
+\setlength{\parskip}{1em} % Définit un espace entre chaque paragraphe
+\setlength{\parindent}{0pt} % Optionnel : enlève l'indentation des paragraphes
+
+\begin{document}
+
+\emergencystretch=1em % Ajoute une flexibilité d'espacement
+
+% First page content
+\thispagestyle{firstpage}
+
+
+\vspace*{2cm}
+\begin{center}
+    \Huge Laboratoire 7 \\
+    \vspace{0.2cm}
+    \Large Parallélisme des tâches\\
+    \vspace{1cm}
+    \small Départements : TIC\\
+    Unité d'enseignement HPC\\
+\end{center}
+
+\vspace{9cm}
+
+\renewcommand{\arraystretch}{1.5} % Adjust row height
+
+\begin{flushleft}
+    \begin{tabular}{@{}l l@{}}
+        \textbf{Auteur :}        & \textbf{Urs Behrmann} \\
+        \textbf{Professeur :}    & \textbf{Alberto Dassatti} \\
+        \textbf{Assistant :}     & \textbf{Bruno Da Rocha Carvalho} \\
+        \textbf{Classe :}        & \textbf{HPC} \\
+        \textbf{Salle de labo :} & \textbf{A09} \\
+        \textbf{Date :}          & \textbf{19 mai 2026} \\
+    \end{tabular}
+\end{flushleft}
+
+\newpage
+
+% Apply the other pages style
+\pagestyle{otherpages}
+
+\tableofcontents
+
+\newpage
+
+\section{Analyse des k-mers}
+
+Trois exécutables : \texttt{k-mer} (code fourni), \texttt{k-mer-st} (mono-thread optimisé), \texttt{k-mer-mt} (OpenMP). Mesures sur \texttt{inputs/large.txt} ($\approx$\,5\,M caractères), $k = 3$, compilation \texttt{-O2}. Le chronomètre (\texttt{clock\_gettime}) couvre uniquement la boucle de comptage des k-mers, hors lecture du fichier.
+
+\subsection{Inefficacités du code fourni}
+
+Le programme initial (\texttt{main.c}) présente deux problèmes majeurs :
+
+\begin{itemize}
+    \item \textbf{I/O répétées} : pour chaque position $i$, \texttt{read\_kmer} ouvre le fichier (\texttt{fopen}), se repositionne (\texttt{fseek}), lit $k$ octets (\texttt{fgetc}) puis ferme (\texttt{fclose}). Sur un fichier de 5\,M caractères, cela représente environ 5\,M ouvertures de fichier --- un coût système dominant, totalement évitable.
+    \item \textbf{Recherche linéaire} : \texttt{add\_kmer} parcourt toute la table avec \texttt{strcmp} à chaque insertion. Avec beaucoup de k-mers distincts, la complexité approche $O(n \times m)$ ($n$ = positions, $m$ = entrées uniques), ce qui ralentit fortement le traitement même une fois les I/O supprimées.
+\end{itemize}
+
+\subsection{Améliorations mono-threadées}
+
+La version \texttt{k-mer-st} (\texttt{main\_st.c}) conserve la même table et la même interface, mais applique des optimisations déjà vues dans les labos précédents :
+
+\begin{itemize}
+    \item \textbf{Lecture unique} : le fichier est chargé entièrement en mémoire (\texttt{fread} dans un tampon), comme l'évitement d'allocations répétées au labo~6.
+    \item \textbf{Accès direct} : chaque k-mer est extrait par \texttt{memcpy} depuis le tampon, sans réouverture du fichier.
+    \item \textbf{Compilation \texttt{-O2}} : comme au labo~4, le compilateur vectorise et optimise les boucles simples (\texttt{memcpy}, boucle principale).
+\end{itemize}
+
+La structure de données (tableau dynamique + recherche linéaire) reste volontairement inchangée pour isoler le gain lié aux I/O.
+
+\newpage
+
+\subsection{Performances mono-threadées}
+
+Sur \texttt{large.txt} avec $k = 3$ :
+
+\begin{center}
+\begin{tabular}{|l|r|}
+\hline
+Version & Temps (s) \\
+\hline
+\texttt{k-mer} (fourni) & 170{,}8 \\
+\texttt{k-mer-st} (optimisé) & 136{,}6 \\
+\hline
+\end{tabular}
+\end{center}
+
+La version optimisée est environ \textbf{25\,\%} plus rapide (170{,}8\,s $\rightarrow$ 136{,}6\,s). Le gain confirme que les I/O répétées étaient un goulot important, mais le temps reste élevé : la recherche linéaire dans \texttt{add\_kmer} domine désormais le profil. Sur un petit fichier (\texttt{input.txt}, 7 caractères), la différence est négligeable car le coût des \texttt{fopen} n'a pas le temps de s'accumuler.
+
+\subsubsection{Analyse \texttt{perf stat}}
+
+Mesure sur \texttt{k-mer-st} avec \texttt{sudo perf stat -d} :
+
+\begin{verbatim}
+sudo perf stat -d ./k-mer-st ../inputs/large.txt 3
+\end{verbatim}
+
+\begin{center}
+\begin{tabular}{|l|r|l|}
+\hline
+Compteur & Valeur & Interprétation \\
+\hline
+Temps écoulé & 137{,}26\,s & Cohérent avec le chronomètre interne (136{,}6\,s) \\
+Temps user / sys & 137{,}21\,s / 0{,}02\,s & Quasi tout le temps en espace utilisateur \\
+CPUs utilisés & 1{,}000 & Mono-thread confirmé \\
+Instructions & 1{,}39 $\times 10^{12}$ & Volume de travail élevé \\
+Cycles & 6{,}43 $\times 10^{11}$ & --- \\
+IPC & 2{,}16 & Bon débit d'instructions par cycle \\
+Branches / miss & 2{,}63 $\times 10^{9}$ / 0{,}81\,\% & Boucles prévisibles (\texttt{strcmp}, \texttt{memcpy}) \\
+L1-dcache miss & 25{,}21\,\% & Accès mémoire dispersés (table de k-mers) \\
+LLC miss & 0{,}02\,\% & La RAM reste rarement sollicitée \\
+\hline
+\end{tabular}
+\end{center}
+
+Le rapport user/sys (137{,}21\,s / 0{,}02\,s) montre que les I/O système ne dominent plus : contrairement au code fourni, le programme passe presque exclusivement dans \texttt{add\_kmer} et la boucle principale. L'IPC de 2{,}16 indique que le CPU reste relativement bien utilisé malgré l'accès non contigu à la table de k-mers.
+
+En revanche, \textbf{25\,\%} de misses L1 confirment que la table de k-mers n'est pas cache-friendly : chaque appel à \texttt{strcmp} parcourt des chaînes et des structures allouées dynamiquement (\texttt{realloc}), ce qui génère des accès mémoire non contigus. Les misses LLC restent faibles (0{,}02\,\%) : le goulot n'est pas la RAM mais la latence L1 et le volume d'instructions (1{,}39\,T) produit par les millions de comparaisons de chaînes. Le faible taux de branch-misses (0{,}81\,\%) est cohérent avec des boucles \texttt{for} et \texttt{strcmp} dont le comportement est stable.
+
+\subsubsection{Analyse \texttt{perf record} / \texttt{perf report}}
+
+Profil par fonctions avec \texttt{perf record -g} :
+
+\begin{verbatim}
+sudo perf record -g ./k-mer-st ../inputs/large.txt 3
+perf report
+\end{verbatim}
+
+\begin{center}
+\begin{tabular}{|l|r|r|}
+\hline
+Fonction & Samples & Self \\
+\hline
+\texttt{\_\_strcmp\_avx2} (libc) & 84{,}93\,\% & 77{,}30\,\% \\
+\texttt{add\_kmer} & 15{,}02\,\% & 14{,}98\,\% \\
+\texttt{strcmp@plt} & 7{,}51\,\% & 7{,}50\,\% \\
+\texttt{main} & 0{,}03\,\% & 0{,}01\,\% \\
+\texttt{\_\_memmove\_avx\_unaligned\_erms} & 0{,}03\,\% & 0{,}03\,\% \\
+\hline
+\end{tabular}
+\end{center}
+
+Le profil confirme que \textbf{près de 85\,\%} du temps est passé dans \texttt{\_\_strcmp\_avx2}, la version vectorisée AVX2 de \texttt{strcmp} fournie par la libc. C'est la conséquence directe de la recherche linéaire dans \texttt{add\_kmer} : pour chaque position du fichier, le programme compare le k-mer courant à toutes les entrées déjà stockées. La fonction \texttt{add\_kmer} elle-même apparaît à 15\,\%, correspondant à la boucle de parcours de la table et aux appels à \texttt{realloc}/\texttt{strcpy} lors d'insertions.
+
+À l'inverse, \texttt{memcpy} (\texttt{\_\_memmove\_avx\_unaligned\_erms}) ne pèse que 0{,}03\,\% : l'optimisation de lecture en tampon a bien éliminé les I/O comme goulot mesurable. \texttt{main} est quasi absent du profil (0{,}03\,\%), ce qui indique que la boucle de comptage --- et non l'affichage des résultats --- concentre le travail. Aucune fonction liée aux fichiers (\texttt{fopen}, \texttt{fread}, \texttt{fgetc}) n'apparaît dans le top du rapport, validant l'analyse du \texttt{perf stat} précédent.
+
+\newpage
+
+\subsection{Stratégie de parallélisation}
+
+La version \texttt{k-mer-mt} (\texttt{main\_mp.c}) repose sur OpenMP :
+
+\begin{itemize}
+    \item \textbf{Répartition du travail} : \texttt{\#pragma omp for schedule(static)} distribue les positions $i \in [0,\, \text{taille} - k]$ entre les threads de façon équilibrée. Chaque thread traite un bloc contigu de positions.
+    \item \textbf{Tables locales} : chaque thread possède sa propre \texttt{KmerTable} (\texttt{locals[tid]}). Aucun verrou pendant le comptage --- les threads écrivent dans des structures disjointes, ce qui évite la contention.
+    \item \textbf{Fusion séquentielle} : après la région parallèle, \texttt{merge\_kmer\_table} combine les tables locales dans l'ordre des threads (0, 1, \ldots). Cela préserve l'ordre de première apparition des k-mers, identique à la version séquentielle.
+    \item \textbf{Cas limites} : si $k > \text{taille du fichier}$, le programme quitte avant la parallélisation (comme en séquentiel). Aucun chevauchement entre blocs n'est nécessaire : chaque position $i$ est traitée par exactement un thread ; les k-mers à la frontière de deux blocs sont comptés intégralement par le thread propriétaire de cette position.
+    \item \textbf{Lecture du fichier} : effectuée une seule fois avant \texttt{\#pragma omp parallel}, partagée en lecture seule par tous les threads.
+\end{itemize}
+
+\subsection{Comparaison mono-thread / multi-thread}
+
+\begin{center}
+\begin{tabular}{|l|r|r|}
+\hline
+Version & Temps (s) & Accélération vs \texttt{k-mer-st} \\
+\hline
+\texttt{k-mer} & 170{,}8 & 0{,}80$\times$ \\
+\texttt{k-mer-st} & 136{,}6 & 1{,}00$\times$ \\
+\texttt{k-mer-mt} & 64{,}7 & \textbf{2{,}11}$\times$ \\
+\hline
+\end{tabular}
+\end{center}
+
+La version multi-threadée divise le temps par environ \textbf{2{,}1} par rapport au mono-thread optimisé, et par \textbf{2{,}6} par rapport au code fourni. L'accélération est inférieure au nombre de cœurs disponibles : le goulot d'étranglement principal reste \texttt{add\_kmer} (recherche \texttt{strcmp} linéaire), exécutée en parallèle mais avec une complexité élevée par thread. La phase de fusion séquentielle en fin de traitement ajoute aussi un coût, proportionnel au nombre de k-mers distincts par thread.
+
+\textbf{Scalabilité} : sur un petit fichier, le surcoût OpenMP (création de threads, tables locales, fusion) peut rendre \texttt{k-mer-mt} plus lent que \texttt{k-mer-st}. Sur \texttt{large.txt}, le volume de travail amortit ce surcoût et le parallélisme devient rentable.
+
+\newpage
+
+\section{Activité Pan-Tompkins}
+
+\subsection{Partie parallélisée}
+
+Seule la \textbf{boucle de traitement des paquets} est parallélisée dans \texttt{ecg\_stream\_mp.c}. Pour chaque paquet, le travail comprend :
+\begin{enumerate}
+    \item copie des échantillons dans un tampon local (\texttt{memcpy}) ;
+    \item appel à \texttt{ecg\_analyze} (filtre, dérivée, intégration, seuil adaptatif, détection des pics R) ;
+    \item filtrage des pics selon la zone utile et conversion en indices globaux.
+\end{enumerate}
+
+\textbf{Non parallélisé} : lecture du CSV, fusion des pics de tous les paquets, calcul des intervalles RR et écriture JSON. Ces étapes sont rapides ou doivent rester séquentielles pour préserver l'ordre des pics.
+
+\subsection{Stratégie de parallélisation}
+
+La version \texttt{ecg-mt} utilise OpenMP :
+
+\begin{itemize}
+    \item \textbf{Répartition} : \texttt{\#pragma omp for schedule(static)} sur l'indice de paquet $k$. Chaque paquet est indépendant une fois le signal chargé en mémoire.
+    \item \textbf{Contexte par thread} : un \texttt{ECG\_Context} par thread (\texttt{ctxs[tid]}), car \texttt{ecg\_analyze} réutilise des tampons internes (\texttt{work}, \texttt{threshold}, etc.) non partageables.
+    \item \textbf{Résultats locaux} : chaque paquet écrit dans \texttt{packet\_peaks[k]}, sans verrou.
+    \item \textbf{Fusion séquentielle} : après la région parallèle, les pics sont concaténés dans l'ordre des paquets ($k = 0, 1, \ldots$). Les zones utiles étant disjointes, aucun pic n'apparaît deux fois.
+    \item \textbf{Cas limites} : si le signal tient dans un seul paquet ($\leq 1000$ échantillons), la parallélisation n'apporte rien (un seul travail). Le dernier paquet peut être plus court que 1000 échantillons ; \texttt{ecg\_analyze} gère une longueur variable.
+\end{itemize}
+
+\newpage
+
+\subsection{Choix, intérêt et efficacité}
+
+\textbf{Pourquoi paralléliser par paquet ?} Chaque appel à \texttt{ecg\_analyze} sur 1000 échantillons est une tâche autonome (filtres, intégration, détection). Le découpage en flux rend ce grain naturel pour OpenMP, contrairement à paralléliser l'intérieur de \texttt{ecg\_analyze} qui modifierait le code du labo~1.
+
+\textbf{Pourquoi le chevauchement ?} L'intégration de Pan-Tompkins utilise une fenêtre glissante ($\approx 300\,ms$ de signal). Sans chevauchement, un pic R proche d'une coupure de paquet pourrait être manqué ou mal seuillé. Les 250 échantillons (0{,}5\,s à 500\,Hz) offrent une marge suffisante.
+
+\textbf{Mesures} sur \texttt{test\_ecg.csv} (7500 échantillons, Lead~II) :
+
+\begin{center}
+\begin{tabular}{|l|l|r|r|}
+\hline
+Implémentation & Exécutable & Temps (s) & Pics R \\
+\hline
+Ancienne (labo~1, signal entier) & \texttt{ecg\_analyze} global & 0{,}00015 & 96 \\
+Nouvelle (flux + OpenMP) & \texttt{ecg-mt} & 0{,}00005 & 96 \\
+\hline
+\end{tabular}
+\end{center}
+
+Les deux approches détectent \textbf{96 pics R} : le découpage par paquets avec chevauchement produit le même résultat que l'analyse globale du labo~1.
+
+Le nombre de threads est limité au nombre de paquets (\texttt{omp\_set\_num\_threads(min(paquets, cœurs))}), soit 10 ici. La version MT est \textbf{3$\times$ plus rapide} que l'ancienne sur le même fichier (0{,}05\,ms vs 0{,}15\,ms). Sur un flux plus long (signal concaténé), l'avantage augmente :
+
+\begin{center}
+\begin{tabular}{|l|r|r|r|}
+\hline
+Signal & Ancienne (s) & \texttt{ecg-mt} (s) & Gain \\
+\hline
+7500 échant. (1$\times$) & 0{,}00015 & 0{,}00005 & 3$\times$ \\
+75000 échant. (10$\times$) & 0{,}0015 & 0{,}00022 & 7$\times$ \\
+750000 échant. (100$\times$) & 0{,}019 & 0{,}0023 & 8$\times$ \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Évaluation} : la parallélisation par paquet est pertinente dès que le nombre de threads est adapté au nombre de paquets. Répéter un petit signal ne change pas le rapport ; en revanche, un \textbf{flux continu réel} (plus long) ou un réglage correct des threads suffit à dépasser l'ancienne implémentation.
+
+\newpage
+
+\section*{Utilisation des outils IA}
+
+Claude sonnet a été utilisé pour améliorer la formulation et corriger les fautes d'orthographe et de grammaire. Les choix et modifications du code sont les miennes.
+
+\end{document}
